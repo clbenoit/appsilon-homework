@@ -8,9 +8,7 @@ box::use(
 #' @export
 ui <- function(id) {
   ns <- NS(id)
-  
   tagList(
-    h3("Table"),
     fluidRow(column(width = 12,
                     reactable$reactableOutput(ns("table"))
     ))

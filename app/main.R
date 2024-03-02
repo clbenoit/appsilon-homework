@@ -4,25 +4,85 @@
 box::use(
   shiny[bootstrapPage, div, moduleServer, NS, renderUI, tags, uiOutput,
         selectizeInput, updateSelectizeInput, shinyOptions, bindCache,
-        observe,reactive, req ],
+        observe,reactive, req, fluidRow, p, icon, h2, sliderInput, column,
+        tagList],
   utils[head],
   RSQLite[SQLite],
   DBI[dbReadTable, dbConnect],
   dplyr[`%>%`,filter],
+  bslib[bs_theme,page_navbar,
+        nav_item, nav_menu, nav_panel, nav_spacer],
+  shinydashboard[dashboardHeader,dashboardPage,dashboardBody,dashboardSidebar,
+                 sidebarMenu,menuItem, box]
 )
 ## Import shiny modules
 box::use(
   app/view/render_table,
 )
 
+link_posit <- tags$a(
+  shiny::icon("r-project"), "Posit",
+  href = "https://posit.co",
+  target = "_blank"
+)
+
 #' @export
 ui <- function(id) {
   ns <- NS(id)
   bootstrapPage(
-    selectizeInput(inputId = ns("specie"),label = "Specie", choices = NULL, width = "100%",
-                   multiple  = TRUE),
-    uiOutput(ns("message")),
-    render_table$ui(ns("occurence_filtered"))
+    # fluidRow(
+    #   selectizeInput(inputId = ns("specie"),label = "Specie", 
+    #                  choices = NULL, width = "100%",
+    #                  multiple  = TRUE),
+    #   render_table$ui(ns("occurence_filtered"))
+    # ),
+      page_navbar(
+      title = "MyApp",
+          header = fluidRow(class = "specie-area",
+                      column(width = 6,class = "specie-area",
+                             selectizeInput(inputId = ns("specie"),label = "Specie",
+                                choices = NULL, width = "100%",
+                                multiple  = TRUE)),
+                      column(width = 6,class = "specie-area",
+                             selectizeInput(inputId = ns("specie2"),
+                                            label = "Specie",
+                                            choices = NULL, width = "100%",
+                                            multiple  = TRUE))
+                      ),
+        nav_panel(title = "Explore", 
+                dashboardPage(
+                  dashboardHeader(title = NULL),
+                  dashboardSidebar(sidebarMenu(
+                    menuItem(tabName = "home", text = "Home", icon = icon("home")),
+                    menuItem(tabName = "another", text = "Another Tab", icon = icon("heart"))
+                  )),
+                  dashboardBody(
+                    fluidRow(
+                      render_table$ui(ns("occurence_filtered"))
+                    )
+                  )
+                )
+              ),
+      nav_panel(title = "Count",
+                dashboardPage(
+                  dashboardHeader(title = NULL),
+                  dashboardSidebar(sidebarMenu(
+                    menuItem(tabName = "home", text = "Home", icon = icon("home")),
+                    menuItem(tabName = "another", text = "Another Tab", icon = icon("heart"))
+                  )),
+                  dashboardBody(
+                    fluidRow(
+                    )
+                  )
+            )),
+      nav_panel("Countributors", p("Third page content.")),
+      nav_spacer(),
+      nav_menu(
+        title = "Links",
+        align = "right",
+        nav_item(link_posit)
+      )
+    )
   )
 }
 

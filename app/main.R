@@ -3,13 +3,13 @@
 ## Import dependancies
 box::use(
   shiny[bootstrapPage, div, moduleServer, NS, renderUI, tags, uiOutput,
-        selectizeInput, updateSelectizeInput, shinyOptions, bindCache,
-        observe,reactive, req, fluidRow, p, icon, h2, sliderInput, column,
-        tagList],
+        selectizeInput, updateSelectizeInput, shinyOptions, bindCache,bindEvent,
+        observe, observeEvent ,reactive, req, fluidRow, p, icon, h2, sliderInput, column,
+        tagList, reactiveVal],
   utils[head],
   RSQLite[SQLite],
-  DBI[dbReadTable, dbConnect],
-  dplyr[`%>%`,filter],
+  DBI[dbReadTable, dbConnect,dbGetQuery],
+  dplyr[`%>%`,filter,select],
   bslib[bs_theme,page_navbar,
         nav_item, nav_menu, nav_panel, nav_spacer],
   shinydashboard[dashboardHeader,dashboardPage,dashboardBody,dashboardSidebar,
@@ -30,22 +30,17 @@ link_posit <- tags$a(
 ui <- function(id) {
   ns <- NS(id)
   bootstrapPage(
-    # fluidRow(
-    #   selectizeInput(inputId = ns("specie"),label = "Specie", 
-    #                  choices = NULL, width = "100%",
-    #                  multiple  = TRUE),
-    #   render_table$ui(ns("occurence_filtered"))
-    # ),
       page_navbar(
       title = "MyApp",
           header = fluidRow(class = "specie-area",
+                      column(width = 6, class = "specie-area",
+                             selectizeInput(inputId = ns("scientificName"),
+                                            label = "scientificName",
+                                            choices = NULL, width = "100%",
+                                            multiple  = TRUE)),
                       column(width = 6,class = "specie-area",
-                             selectizeInput(inputId = ns("specie"),label = "Specie",
-                                choices = NULL, width = "100%",
-                                multiple  = TRUE)),
-                      column(width = 6,class = "specie-area",
-                             selectizeInput(inputId = ns("specie2"),
-                                            label = "Specie",
+                             selectizeInput(inputId = ns("vernacularName"),
+                                            label = "vernacularName",
                                             choices = NULL, width = "100%",
                                             multiple  = TRUE))
                       ),
@@ -109,22 +104,51 @@ server <- function(id) {
     con <- dbConnect(SQLite(), config$db_path)
     occurence <- dbReadTable(con,"occurence")
     multimedia <- dbReadTable(con,"multimedia")
-    
-    updateSelectizeInput(session = session, inputId = "specie", choices = unique(occurence$scientificName), server = TRUE)
-    
-    specie_occurence <- reactive({
-      req(input$specie)
+    species_names_match <- dbGetQuery(con, "SELECT DISTINCT vernacularName, scientificName FROM occurence;")
+    species_names_match$id <- seq(1:nrow(species_names_match))
+    species_names_match[is.na(species_names_match[,1]),] <- species_names_match[is.na(species_names_match[,1]),2]
+    species_names_match[is.na(species_names_match[,2]),] <- species_names_match[is.na(species_names_match[,2]),1]
+    scientificName_choices <-  species_names_match$id
+    names(scientificName_choices) <- species_names_match$scientificName
+    vernacularName_choices <- species_names_match$id
+    names(vernacularName_choices) <- species_names_match$vernacularName
+    updateSelectizeInput(session = session, inputId = "scientificName", choices = scientificName_choices, server = TRUE)
+    updateSelectizeInput(session = session, inputId = "vernacularName", choices = vernacularName_choices, server = TRUE)
+    selected_specie <- reactiveVal(0)
+    observeEvent(input$scientificName, ignoreInit = TRUE,{
+      req(input$scientificName)
+      print("update specie id (scientificaly based)")
+      selected_specie(input$scientificName)
+    })
+    observeEvent(input$vernacularName,ignoreInit = TRUE, {
+      print("update specie id (vernacularaly based)")
+        selected_specie(input$vernacularName)
+    })
+    observeEvent(selected_specie(), ignoreInit = TRUE,{                    
+        req(selected_specie())
+        print("update select inputs")
+          updateSelectizeInput(session = session, inputId = "scientificName", 
+                               choices = scientificName_choices,
+                               selected = selected_specie(), server = TRUE)
+          updateSelectizeInput(session = session, inputId = "vernacularName",
+                               choices = vernacularName_choices,
+                               selected = selected_specie(), server = TRUE)
+      })
+
+    occurence_filtered <- reactive({
+      req(input$scientificName)
       req(occurence)
-      print(head(input$specie))
-      occurence %>%
-        filter(scientificName %in% input$specie)
-    }) # %>% bindCache(list(input$specie,occurence))
+      print("filtering occurences : ")
+      occurence_filtered <-occurence %>% filter(scientificName %in% names(scientificName_choices[as.numeric(input$scientificName)]))
+      print(paste0(nrow(occurence_filtered)," kept after filtering"))
+      return(occurence_filtered)
+    }) %>% bindEvent(selected_specie()) # %>% bindCache(list(input$scientificName,occurence))
     
-    render_table$server("occurence_filtered", data = specie_occurence())
+    render_table$server("occurence_filtered", data = occurence_filtered)
     
     observe({
-      req(specie_occurence())
-      print(head(specie_occurence()))
+      req(occurence_filtered())
+      print(nrow(occurence_filtered()))
     })
 
   })

@@ -2,7 +2,7 @@
 
 box::use(
   reactable,
-  shiny[h3, moduleServer, NS, tagList, fluidRow, column, req],
+  shiny[h3, moduleServer, NS, tagList, fluidRow, column, req, observe],
 )
 
 #' @export
@@ -18,8 +18,10 @@ ui <- function(id) {
 #' @export
 server <- function(id, data) {
   moduleServer(id, function(input, output, session) {
+    observe({
     output$table <- reactable$renderReactable(
-      reactable$reactable(data)
-    )
-  })
+      reactable$reactable(data())
+    )}
+  )
+})
 }

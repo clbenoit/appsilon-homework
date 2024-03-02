@@ -5,15 +5,16 @@ box::use(
   shiny[bootstrapPage, div, moduleServer, NS, renderUI, tags, uiOutput,
         selectizeInput, updateSelectizeInput, shinyOptions, bindCache,bindEvent,
         observe, observeEvent ,reactive, req, fluidRow, p, icon, h2, sliderInput, column,
-        tagList, reactiveVal],
+        tagList, reactiveVal, conditionalPanel],
   utils[head],
   RSQLite[SQLite],
   DBI[dbReadTable, dbConnect,dbGetQuery],
   dplyr[`%>%`,filter,select],
   bslib[bs_theme,page_navbar,
-        nav_item, nav_menu, nav_panel, nav_spacer],
+        nav_item, nav_menu, nav_panel, nav_spacer,sidebar],
   shinydashboard[dashboardHeader,dashboardPage,dashboardBody,dashboardSidebar,
-                 sidebarMenu,menuItem, box]
+                 sidebarMenu,menuItem, box],
+  shinyjs[useShinyjs, show, hide],
 )
 ## Import shiny modules
 box::use(
@@ -30,8 +31,23 @@ link_posit <- tags$a(
 #' @export
 ui <- function(id) {
   ns <- NS(id)
+  useShinyjs()  # Initialize shinyjs
   bootstrapPage(
-      page_navbar(
+      page_navbar(id = ns("page_navbar"),
+      sidebar = sidebar(id = ns("main_sidebar"),
+                        #'sidebar text'),
+          conditionalPanel(ns=ns,
+            "input.page_navbar === 'Explore' || input.page_navbar === 'Count'",
+            "Page 1 sidebar"
+          ),
+          conditionalPanel(ns=ns,
+            "input.page_navbar === 'Contributors'",
+            "Page 2 sidebar"
+          ),
+          conditionalPanel(ns=ns,
+            "input.page_navbar === 'Test'",
+            "Page 3 sidebar"
+          )),
       title = "MyApp",
           header = fluidRow(class = "specie-area",
                       column(width = 6, class = "specie-area",
@@ -45,13 +61,15 @@ ui <- function(id) {
                                             choices = NULL, width = "100%",
                                             multiple  = TRUE))
                       ),
-        nav_panel(title = "Explore", 
+        nav_panel(title = "Explore",
                 dashboardPage(
-                  dashboardHeader(title = NULL),
-                  dashboardSidebar(sidebarMenu(
-                    menuItem(tabName = "home", text = "Home", icon = icon("home")),
-                    menuItem(tabName = "another", text = "Another Tab", icon = icon("heart"))
-                  )),
+                  #dashboardHeader(title = NULL),
+                  dashboardHeader(disable = TRUE),
+                  dashboardSidebar(disable = TRUE),
+                  # dashboardSidebar(sidebarMenu(
+                  #   menuItem(tabName = "home", text = "Home", icon = icon("home")),
+                  #   menuItem(tabName = "another", text = "Another Tab", icon = icon("heart"))
+                  # )),
                   dashboardBody(
                     fluidRow(
                       leaflet$ui(ns("exploremap")),
@@ -62,17 +80,19 @@ ui <- function(id) {
               ),
       nav_panel(title = "Count",
                 dashboardPage(
-                  dashboardHeader(title = NULL),
-                  dashboardSidebar(sidebarMenu(
-                    menuItem(tabName = "home", text = "Home", icon = icon("home")),
-                    menuItem(tabName = "another", text = "Another Tab", icon = icon("heart"))
-                  )),
+                  #dashboardHeader(title = NULL),
+                  dashboardHeader(disable = TRUE),
+                  dashboardSidebar(disable = TRUE),
+                  # dashboardSidebar(sidebarMenu(
+                  #   menuItem(tabName = "home", text = "Home", icon = icon("home")),
+                  #   menuItem(tabName = "another", text = "Another Tab", icon = icon("heart"))
+                  # )),
                   dashboardBody(
                     fluidRow(
                     )
                   )
             )),
-      nav_panel("Countributors", p("Third page content.")),
+      nav_panel("Contributors", p("Third page content.")),
       nav_spacer(),
       nav_menu(
         title = "Links",
@@ -86,22 +106,35 @@ ui <- function(id) {
 #' @export
 server <- function(id) {
   moduleServer(id, function(input, output, session) {
-    
+
+    # observeEvent(input$page_navbar,{
+    #   print(input$page_navbar)
+    #   print(input$main_sidebar)
+    #   if(input$page_navbar == "Contributors"){
+    #     print("hide")
+    #     hide(id = "app-main_sidebar")
+    #     hide(id = "main_sidebar")
+    #   } else {
+    #     print("show")
+    #    show(id = "main_sidebar")
+    #   }
+    # })
+
     ## LOAD APP PARAMETERS ##
     Sys.setenv(R_CONFIG_ACTIVE = "devel")
     config <- config::get()
-    
+
     if (config::get("cache_directory") == "tempdir"){
       tempdir <- tempdir()
       dir.create(file.path(tempdir,"cache"))
       print(paste0("using following cache directory : ", file.path(tempdir,"cache")))
       shinyOptions(cache = cachem::cache_disk(file.path(tempdir,"cache")))
     } else {
-      print(paste0("using following cache directory : ", 
+      print(paste0("using following cache directory : ",
                    config::get("cache_directory")))
       shinyOptions(cache = cachem::cache_disk(config::get("cache_directory")))
     }
-    
+
     ## UPLOAD SQLITE DATABASE ##
     con <- dbConnect(SQLite(), config$db_path)
     occurence <- dbReadTable(con,"occurence")
@@ -126,10 +159,10 @@ server <- function(id) {
       print("update specie id (vernacularaly based)")
         selected_specie(input$vernacularName)
     })
-    observeEvent(selected_specie(), ignoreInit = TRUE,{                    
+    observeEvent(selected_specie(), ignoreInit = TRUE,{
         req(selected_specie())
         print("update select inputs")
-          updateSelectizeInput(session = session, inputId = "scientificName", 
+          updateSelectizeInput(session = session, inputId = "scientificName",
                                choices = scientificName_choices,
                                selected = selected_specie(), server = TRUE)
           updateSelectizeInput(session = session, inputId = "vernacularName",
@@ -145,10 +178,10 @@ server <- function(id) {
       print(paste0(nrow(occurence_filtered)," kept after filtering"))
       return(occurence_filtered)
     }) %>% bindEvent(selected_specie()) # %>% bindCache(list(input$scientificName,occurence))
-    
+
     render_table$server("occurence_filtered", data = occurence_filtered)
     leaflet$server("exploremap", data = occurence_filtered, session)
-  
+
 
   })
 }

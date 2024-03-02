@@ -21,14 +21,14 @@ ui <- function(id) {
 #' @export
 server <- function(id, data, session) {
   moduleServer(id, function(input, output, session) {
-    
+
     # data <- data.frame(
     #   id = c(1, 2, 3),
     #   latitudeDecimal = c(51.505, 51.51, 51.52),
     #   longitudeDecimal = c(-0.09, -0.1, -0.12),
     #   individualCount = c("Marker 1", "Marker 2", "Marker 3")
     # )
-    
+
     output$leafletMap <- renderLeaflet({
       leaflet(data = data()) %>%
       #leaflet(data = data) %>%
@@ -39,9 +39,10 @@ server <- function(id, data, session) {
           layerId = ~id
         )
     })
-    
+
     ##### THIS WORKS ONLY WHEN THE DATA PROVIDED TO LEAFLET IS NOT REACTIVE I DON'T GET WHY ####
     observeEvent(input$leafletMap_marker_click, {
+      print("triggermarker")
       # Get the information about the clicked marker
       click_info <- input$leafletMap_marker_click
       print(click_info)

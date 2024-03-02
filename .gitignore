@@ -47,3 +47,11 @@ po/*~
 
 # RStudio Connect folder
 rsconnect/
+
+*.Rproj
+
+
+app/static/js/app.min.js
+app/static/css/app.min.css
+
+

@@ -18,6 +18,7 @@ box::use(
 ## Import shiny modules
 box::use(
   app/view/render_table,
+  app/view/leaflet,
 )
 
 link_posit <- tags$a(
@@ -53,7 +54,8 @@ ui <- function(id) {
                   )),
                   dashboardBody(
                     fluidRow(
-                      render_table$ui(ns("occurence_filtered"))
+                      leaflet$ui(ns("exploremap")),
+                      #render_table$ui(ns("occurence_filtered"))
                     )
                   )
                 )
@@ -145,11 +147,8 @@ server <- function(id) {
     }) %>% bindEvent(selected_specie()) # %>% bindCache(list(input$scientificName,occurence))
     
     render_table$server("occurence_filtered", data = occurence_filtered)
-    
-    observe({
-      req(occurence_filtered())
-      print(nrow(occurence_filtered()))
-    })
+    leaflet$server("exploremap", data = occurence_filtered, session)
+  
 
   })
 }

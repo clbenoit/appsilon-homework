@@ -1,3 +1,18 @@
 default:
   rhino_log_level: !expr Sys.getenv("RHINO_LOG_LEVEL", "INFO")
   rhino_log_file: !expr Sys.getenv("RHINO_LOG_FILE", NA)
+  db_path: "inst/extdata/biodiversity_test_data.db"
+  cache_directory: "tempdir"
+  
+devel:
+  rhino_log_level: !expr Sys.getenv("RHINO_LOG_LEVEL", "INFO")
+  rhino_log_file: !expr Sys.getenv("RHINO_LOG_FILE", NA)
+  db_path: "inst/extdata/biodiversity_test_data.db"
+  cache_directory: "tempdir"
+  
+  
+production:
+  rhino_log_level: !expr Sys.getenv("RHINO_LOG_LEVEL", "INFO")
+  rhino_log_file: !expr Sys.getenv("RHINO_LOG_FILE", NA)
+  db_path: "edit_db_path.tb"
+  cache_directory: "edit_cache_path"

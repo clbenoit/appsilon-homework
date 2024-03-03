@@ -20,6 +20,8 @@ box::use(
 box::use(
   app/view/render_table,
   app/view/leaflet,
+  app/logic/variablesManager[Variables],
+  app/logic/dataManager[DataManager],
 )
 
 link_posit <- tags$a(
@@ -73,7 +75,7 @@ ui <- function(id) {
                   dashboardBody(
                     fluidRow(
                       leaflet$ui(ns("exploremap")),
-                      #render_table$ui(ns("occurence_filtered"))
+                      render_table$ui(ns("occurence_filtered"))
                     )
                   )
                 )
@@ -107,23 +109,13 @@ ui <- function(id) {
 server <- function(id) {
   moduleServer(id, function(input, output, session) {
 
-    # observeEvent(input$page_navbar,{
-    #   print(input$page_navbar)
-    #   print(input$main_sidebar)
-    #   if(input$page_navbar == "Contributors"){
-    #     print("hide")
-    #     hide(id = "app-main_sidebar")
-    #     hide(id = "main_sidebar")
-    #   } else {
-    #     print("show")
-    #    show(id = "main_sidebar")
-    #   }
-    # })
+    Variables <- Variables$new()
+    DataManager <- DataManager$new()
+    DataManager$loadDb()
 
     ## LOAD APP PARAMETERS ##
     Sys.setenv(R_CONFIG_ACTIVE = "devel")
     config <- config::get()
-
     if (config::get("cache_directory") == "tempdir"){
       tempdir <- tempdir()
       dir.create(file.path(tempdir,"cache"))
@@ -135,25 +127,14 @@ server <- function(id) {
       shinyOptions(cache = cachem::cache_disk(config::get("cache_directory")))
     }
 
-    ## UPLOAD SQLITE DATABASE ##
-    con <- dbConnect(SQLite(), config$db_path)
-    occurence <- dbReadTable(con,"occurence")
-    multimedia <- dbReadTable(con,"multimedia")
-    species_names_match <- dbGetQuery(con, "SELECT DISTINCT vernacularName, scientificName FROM occurence;")
-    species_names_match$id <- seq(1:nrow(species_names_match))
-    species_names_match[is.na(species_names_match[,1]),] <- species_names_match[is.na(species_names_match[,1]),2]
-    species_names_match[is.na(species_names_match[,2]),] <- species_names_match[is.na(species_names_match[,2]),1]
-    scientificName_choices <-  species_names_match$id
-    names(scientificName_choices) <- species_names_match$scientificName
-    vernacularName_choices <- species_names_match$id
-    names(vernacularName_choices) <- species_names_match$vernacularName
-    updateSelectizeInput(session = session, inputId = "scientificName", choices = scientificName_choices, server = TRUE)
-    updateSelectizeInput(session = session, inputId = "vernacularName", choices = vernacularName_choices, server = TRUE)
+    updateSelectizeInput(session = session, inputId = "scientificName", choices = DataManager$scientificName_choices, server = TRUE)
+    updateSelectizeInput(session = session, inputId = "vernacularName", choices = DataManager$vernacularName_choices, server = TRUE)
     selected_specie <- reactiveVal(0)
     observeEvent(input$scientificName, ignoreInit = TRUE,{
       req(input$scientificName)
       print("update specie id (scientificaly based)")
       selected_specie(input$scientificName)
+      Variables$set_scientificName(names(DataManager$scientificName_choices[as.numeric(input$scientificName)]))
     })
     observeEvent(input$vernacularName,ignoreInit = TRUE, {
       print("update specie id (vernacularaly based)")
@@ -163,25 +144,20 @@ server <- function(id) {
         req(selected_specie())
         print("update select inputs")
           updateSelectizeInput(session = session, inputId = "scientificName",
-                               choices = scientificName_choices,
+                               choices = DataManager$scientificName_choices,
                                selected = selected_specie(), server = TRUE)
           updateSelectizeInput(session = session, inputId = "vernacularName",
-                               choices = vernacularName_choices,
+                               choices = DataManager$vernacularName_choices,
                                selected = selected_specie(), server = TRUE)
       })
 
-    occurence_filtered <- reactive({
-      req(input$scientificName)
-      req(occurence)
-      print("filtering occurences : ")
-      occurence_filtered <-occurence %>% filter(scientificName %in% names(scientificName_choices[as.numeric(input$scientificName)]))
-      print(paste0(nrow(occurence_filtered)," kept after filtering"))
-      return(occurence_filtered)
-    }) %>% bindEvent(selected_specie()) # %>% bindCache(list(input$scientificName,occurence))
+    observeEvent(Variables$filters$scientificName, ignoreInit = TRUE,{
+      req(Variables$filters$scientificName)
+      DataManager$filterbyscientificName(Variables$filters$scientificName)
+    })
 
-    render_table$server("occurence_filtered", data = occurence_filtered)
-    leaflet$server("exploremap", data = occurence_filtered, session)
-
+    render_table$server("occurence_filtered", data = DataManager$filtered_data)
+    leaflet$server("exploremap", data = DataManager$filtered_data, session)
 
   })
 }

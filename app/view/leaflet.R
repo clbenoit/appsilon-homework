@@ -6,6 +6,7 @@ box::use(
         uiOutput,renderUI,img,observeEvent],
   leaflet[makeIcon,leafletOutput,renderLeaflet,addTiles,setView,addProviderTiles,addMarkers,leaflet],
   dplyr[`%>%`,filter],
+  utils[head],
 )
 #' @export
 ui <- function(id) {
@@ -28,16 +29,18 @@ server <- function(id, data, session) {
     #   longitudeDecimal = c(-0.09, -0.1, -0.12),
     #   individualCount = c("Marker 1", "Marker 2", "Marker 3")
     # )
-
-    output$leafletMap <- renderLeaflet({
-      leaflet(data = data()) %>%
-      #leaflet(data = data) %>%
-        addTiles() %>%
-        addMarkers(
-          ~longitudeDecimal, ~latitudeDecimal,
-          icon = icon("location-dot"), popup = ~individualCount, label = ~individualCount,
-          layerId = ~id
-        )
+    observe({
+      output$leafletMap <- renderLeaflet({
+        req(data$occurence_filtered)
+        #leaflet(data = data) %>%
+        leaflet(data = data$occurence_filtered) %>%
+          addTiles() %>%
+          addMarkers(
+            ~longitudeDecimal, ~latitudeDecimal,
+            icon = icon("location-dot"), popup = ~individualCount, label = ~individualCount,
+            layerId = ~id
+          )
+      })
     })
 
     ##### THIS WORKS ONLY WHEN THE DATA PROVIDED TO LEAFLET IS NOT REACTIVE I DON'T GET WHY ####

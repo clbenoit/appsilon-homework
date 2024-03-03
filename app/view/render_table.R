@@ -19,9 +19,10 @@ ui <- function(id) {
 server <- function(id, data) {
   moduleServer(id, function(input, output, session) {
     observe({
-    output$table <- reactable$renderReactable(
-      reactable$reactable(data())
-    )}
-  )
-})
+      req(data$occurence_filtered)
+      output$table <- reactable$renderReactable(
+      reactable$reactable(data$occurence_filtered)
+      )
+    })
+  })
 }

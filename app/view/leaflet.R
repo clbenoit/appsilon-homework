@@ -29,7 +29,7 @@ server <- function(id, data, session) {
     #   longitudeDecimal = c(-0.09, -0.1, -0.12),
     #   individualCount = c("Marker 1", "Marker 2", "Marker 3")
     # )
-    observe({
+    #observe({
       output$leafletMap <- renderLeaflet({
         req(data$occurence_filtered)
         #leaflet(data = data) %>%
@@ -41,7 +41,7 @@ server <- function(id, data, session) {
             layerId = ~id
           )
       })
-    })
+    #})
 
     ##### THIS WORKS ONLY WHEN THE DATA PROVIDED TO LEAFLET IS NOT REACTIVE I DON'T GET WHY ####
     observeEvent(input$leafletMap_marker_click, {

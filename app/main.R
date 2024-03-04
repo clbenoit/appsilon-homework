@@ -20,6 +20,7 @@ box::use(
 box::use(
   app/view/render_table,
   app/view/leaflet,
+  app/view/timeline,
   app/logic/variablesManager[Variables],
   app/logic/dataManager[DataManager],
 )
@@ -64,36 +65,39 @@ ui <- function(id) {
                                             multiple  = TRUE))
                       ),
         nav_panel(title = "Explore",
-                dashboardPage(
-                  #dashboardHeader(title = NULL),
-                  dashboardHeader(disable = TRUE),
-                  dashboardSidebar(disable = TRUE),
-                  # dashboardSidebar(sidebarMenu(
+                # dashboardPage(
+                #   #dashboardHeader(title = NULL),
+                #   dashboardHeader(disable = TRUE),
+                #   dashboardSidebar(disable = TRUE),
+                #   # dashboardSidebar(sidebarMenu(
                   #   menuItem(tabName = "home", text = "Home", icon = icon("home")),
                   #   menuItem(tabName = "another", text = "Another Tab", icon = icon("heart"))
                   # )),
-                  dashboardBody(
-                    fluidRow(
+                  # dashboardBody(
+                  #   fluidRow(
+                      timeline$ui(ns("timeline")),
+                      #timelinetest$ui(ns("timeline")),
                       leaflet$ui(ns("exploremap")),
                       render_table$ui(ns("occurence_filtered"))
-                    )
-                  )
-                )
+                #     )
+                #   )
+                # )
               ),
       nav_panel(title = "Count",
-                dashboardPage(
-                  #dashboardHeader(title = NULL),
-                  dashboardHeader(disable = TRUE),
-                  dashboardSidebar(disable = TRUE),
+                # dashboardPage(
+                #   #dashboardHeader(title = NULL),
+                #   dashboardHeader(disable = TRUE),
+                #   dashboardSidebar(disable = TRUE),
                   # dashboardSidebar(sidebarMenu(
                   #   menuItem(tabName = "home", text = "Home", icon = icon("home")),
                   #   menuItem(tabName = "another", text = "Another Tab", icon = icon("heart"))
                   # )),
-                  dashboardBody(
-                    fluidRow(
-                    )
-                  )
-            )),
+                  # dashboardBody(
+                  #   fluidRow(
+                  #   )
+                  # )
+      #      )
+      ),
       nav_panel("Contributors", p("Third page content.")),
       nav_spacer(),
       nav_menu(
@@ -156,6 +160,12 @@ server <- function(id) {
       DataManager$filterbyscientificName(Variables$filters$scientificName)
     })
 
+    # observe({
+    #   print(head(DataManager$filtered_data$occurence_filtered))
+    # })
+
+    #timelinetest$server("timeline", data = DataManager$filtered_data)
+    timeline$server("timeline", data = DataManager$filtered_data)
     render_table$server("occurence_filtered", data = DataManager$filtered_data)
     leaflet$server("exploremap", data = DataManager$filtered_data, session)
 

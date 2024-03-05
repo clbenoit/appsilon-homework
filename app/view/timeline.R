@@ -22,7 +22,7 @@ ui <- function(id) {
 }
 
 #' @export
-server <- function(id, data) {
+server <- function(id, data, variables) {
   moduleServer(id, function(input, output, session) {
 
     timeline_dataframes <- reactive({
@@ -70,11 +70,11 @@ server <- function(id, data) {
 
     })
 
-    observe({
-      print("WARNING GROUPS ARE FALSE")
-      print(head(timeline_dataframes()[[1]]))
-      print(head(timeline_dataframes()[[2]]))
-    })
+    # observe({
+    #   print("WARNING GROUPS ARE FALSE")
+    #   print(head(timeline_dataframes()[[1]]))
+    #   print(head(timeline_dataframes()[[2]]))
+    # })
 
     output$timevisui <- renderTimevis({
     #output$timeline <- renderUI({renderTimevis(
@@ -88,9 +88,9 @@ server <- function(id, data) {
     })
 
     observeEvent(input$timevisui_selected, {
-      idString <- input$timevisui_selected
-      print("selected")
-      print(idString)
+      selected_marker <- tryCatch(as.numeric(input$timevisui_selected),
+                                  warning = function(w){return(NULL)})
+      variables$markers$timeline  <- selected_marker
     })
 
   })

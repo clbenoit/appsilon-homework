@@ -5,7 +5,7 @@ box::use(
   shiny[bootstrapPage, div, moduleServer, NS, renderUI, tags, uiOutput,
         selectizeInput, updateSelectizeInput, shinyOptions, bindCache,bindEvent,
         observe, observeEvent ,reactive, req, fluidRow, p, icon, h2, sliderInput, column,
-        tagList, reactiveVal, conditionalPanel],
+        tagList, reactiveVal, conditionalPanel, renderText],
   utils[head],
   RSQLite[SQLite],
   DBI[dbReadTable, dbConnect,dbGetQuery],
@@ -76,7 +76,7 @@ ui <- function(id) {
                   # dashboardBody(
                   #   fluidRow(
                       timeline$ui(ns("timeline")),
-                      #timelinetest$ui(ns("timeline")),
+                      uiOutput(ns("imageUI")),
                       leaflet$ui(ns("exploremap")),
                       render_table$ui(ns("occurence_filtered"))
                 #     )
@@ -123,9 +123,9 @@ server <- function(id) {
     observeEvent(input$scientificName, ignoreInit = TRUE,{
       req(input$scientificName)
       print("update specie id (scientificaly based)")
-      print(input$scientificName)
       selected_specie(input$scientificName)
-      Variables$set_speciesID(DataManager$scientificName_choices[DataManager$scientificName_choices %in% input$scientificName])
+      #Variables$set_speciesID(DataManager$scientificName_choices[DataManager$scientificName_choices %in% input$scientificName])
+      Variables$set_scientificName(names(DataManager$scientificName_choices[DataManager$scientificName_choices %in% input$scientificName]))
     })
     observeEvent(input$vernacularName,ignoreInit = TRUE, {
       print("update specie id (vernacularaly based)")
@@ -142,15 +142,35 @@ server <- function(id) {
                                selected = selected_specie(), server = TRUE)
       })
 
-    observeEvent(Variables$filters$speciesID, ignoreInit = TRUE,{
-      req(Variables$filters$speciesID)
-      DataManager$filterbyscientificName(Variables$filters$speciesID)
+    observeEvent(Variables$filters$scientificName, ignoreInit = TRUE,{
+      req(Variables$filters$scientificName)
+      DataManager$filterbyscientificName(Variables$filters$scientificName)
     })
 
-    #timelinetest$server("timeline", data = DataManager$filtered_data)
-    timeline$server("timeline", data = DataManager$filtered_data)
+    timeline$server("timeline", data = DataManager$filtered_data, variables = Variables)
     render_table$server("occurence_filtered", data = DataManager$filtered_data)
     leaflet$server("exploremap", data = DataManager$filtered_data, session)
+
+    observe({
+      if(is.null(Variables$markers$timeline)){
+        output$imageUI <- renderUI({
+          tagList("Select an observation in timeline first")
+        })
+      } else {
+        DataManager$selectPhoto(Variables$markers$timeline)
+        src <- DataManager$multimedia$selected_photo
+        if(length(src) == 0){
+          print(Variables$markers$timeline)
+          output$imageUI <- renderUI({
+            tagList("This obesvation does not have associated pictures")
+          })
+        } else {
+          output$imageUI  <- renderUI({
+            tags$img(src=src, width = 200, height = 100)
+          })
+        }
+      }
+    })
 
   })
 }

@@ -117,28 +117,15 @@ server <- function(id) {
     DataManager <- DataManager$new()
     DataManager$loadDb()
 
-    ## LOAD APP PARAMETERS ##
-    Sys.setenv(R_CONFIG_ACTIVE = "devel")
-    config <- config::get()
-    if (config::get("cache_directory") == "tempdir"){
-      tempdir <- tempdir()
-      dir.create(file.path(tempdir,"cache"))
-      print(paste0("using following cache directory : ", file.path(tempdir,"cache")))
-      shinyOptions(cache = cachem::cache_disk(file.path(tempdir,"cache")))
-    } else {
-      print(paste0("using following cache directory : ",
-                   config::get("cache_directory")))
-      shinyOptions(cache = cachem::cache_disk(config::get("cache_directory")))
-    }
-
     updateSelectizeInput(session = session, inputId = "scientificName", choices = DataManager$scientificName_choices, server = TRUE)
     updateSelectizeInput(session = session, inputId = "vernacularName", choices = DataManager$vernacularName_choices, server = TRUE)
     selected_specie <- reactiveVal(0)
     observeEvent(input$scientificName, ignoreInit = TRUE,{
       req(input$scientificName)
       print("update specie id (scientificaly based)")
+      print(input$scientificName)
       selected_specie(input$scientificName)
-      Variables$set_scientificName(names(DataManager$scientificName_choices[as.numeric(input$scientificName)]))
+      Variables$set_speciesID(DataManager$scientificName_choices[DataManager$scientificName_choices %in% input$scientificName])
     })
     observeEvent(input$vernacularName,ignoreInit = TRUE, {
       print("update specie id (vernacularaly based)")
@@ -155,14 +142,10 @@ server <- function(id) {
                                selected = selected_specie(), server = TRUE)
       })
 
-    observeEvent(Variables$filters$scientificName, ignoreInit = TRUE,{
-      req(Variables$filters$scientificName)
-      DataManager$filterbyscientificName(Variables$filters$scientificName)
+    observeEvent(Variables$filters$speciesID, ignoreInit = TRUE,{
+      req(Variables$filters$speciesID)
+      DataManager$filterbyscientificName(Variables$filters$speciesID)
     })
-
-    # observe({
-    #   print(head(DataManager$filtered_data$occurence_filtered))
-    # })
 
     #timelinetest$server("timeline", data = DataManager$filtered_data)
     timeline$server("timeline", data = DataManager$filtered_data)

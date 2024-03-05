@@ -41,7 +41,6 @@ server <- function(id, data, session) {
             layerId = ~id
           )
       })
-    #})
 
     ##### THIS WORKS ONLY WHEN THE DATA PROVIDED TO LEAFLET IS NOT REACTIVE I DON'T GET WHY ####
     observeEvent(input$leafletMap_marker_click, {

@@ -9,12 +9,16 @@ Variables <- R6::R6Class(
   public = list(
     scientificName = NULL,
     vernacularName= NULL,
+    set_speciedID = NULL,
     filters = reactiveValues(vernacularName = NULL),
-    set_vernacularName = function(vernacularName) {
-      self$filters$vernacularName <- vernacularName
-    },
-    set_scientificName = function(scientificName) {
-      self$filters$scientificName <- scientificName
+    # set_vernacularName = function(vernacularName) {
+    #   self$filters$vernacularName <- vernacularName
+    # },
+    # set_scientificName = function(scientificName) {
+    #   self$filters$scientificName <- scientificName
+    # },
+    set_speciesID = function(speciesID) {
+      self$filters$speciesID <- speciesID
     }
   )
 )

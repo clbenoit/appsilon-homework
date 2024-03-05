@@ -5,7 +5,7 @@ box::use(
   shiny[bootstrapPage, div, moduleServer, NS, renderUI, tags, uiOutput,
         selectizeInput, updateSelectizeInput, shinyOptions, bindCache,bindEvent,
         observe, observeEvent ,reactive, req, fluidRow, p, icon, h2, sliderInput, column,
-        tagList, reactiveVal, conditionalPanel, renderText],
+        tagList, reactiveVal, conditionalPanel, renderText, HTML],
   utils[head],
   RSQLite[SQLite],
   DBI[dbReadTable, dbConnect,dbGetQuery],
@@ -64,39 +64,10 @@ ui <- function(id) {
                                             choices = NULL, width = "100%",
                                             multiple  = TRUE))
                       ),
-        nav_panel(title = "Explore",
-                # dashboardPage(
-                #   #dashboardHeader(title = NULL),
-                #   dashboardHeader(disable = TRUE),
-                #   dashboardSidebar(disable = TRUE),
-                #   # dashboardSidebar(sidebarMenu(
-                  #   menuItem(tabName = "home", text = "Home", icon = icon("home")),
-                  #   menuItem(tabName = "another", text = "Another Tab", icon = icon("heart"))
-                  # )),
-                  # dashboardBody(
-                  #   fluidRow(
-                      timeline$ui(ns("timeline")),
-                      uiOutput(ns("imageUI")),
-                      leaflet$ui(ns("exploremap")),
-                      render_table$ui(ns("occurence_filtered"))
-                #     )
-                #   )
-                # )
-              ),
+      nav_panel(title = "Explore",
+               uiOutput(ns("explorePanel"))
+               ),
       nav_panel(title = "Count",
-                # dashboardPage(
-                #   #dashboardHeader(title = NULL),
-                #   dashboardHeader(disable = TRUE),
-                #   dashboardSidebar(disable = TRUE),
-                  # dashboardSidebar(sidebarMenu(
-                  #   menuItem(tabName = "home", text = "Home", icon = icon("home")),
-                  #   menuItem(tabName = "another", text = "Another Tab", icon = icon("heart"))
-                  # )),
-                  # dashboardBody(
-                  #   fluidRow(
-                  #   )
-                  # )
-      #      )
       ),
       nav_panel("Contributors", p("Third page content.")),
       nav_spacer(),
@@ -124,7 +95,6 @@ server <- function(id) {
       req(input$scientificName)
       print("update specie id (scientificaly based)")
       selected_specie(input$scientificName)
-      #Variables$set_speciesID(DataManager$scientificName_choices[DataManager$scientificName_choices %in% input$scientificName])
       Variables$set_scientificName(names(DataManager$scientificName_choices[DataManager$scientificName_choices %in% input$scientificName]))
     })
     observeEvent(input$vernacularName,ignoreInit = TRUE, {
@@ -140,7 +110,33 @@ server <- function(id) {
           updateSelectizeInput(session = session, inputId = "vernacularName",
                                choices = DataManager$vernacularName_choices,
                                selected = selected_specie(), server = TRUE)
-      })
+    })
+
+    observeEvent(selected_specie(),{
+      if(selected_specie() == 0){
+        output$explorePanel <- renderUI({
+            HTML("<div style='text-align: center; padding: 20px;
+                  background-color: #f8d7da;
+                  color: #721c24; border: 1px solid #f5c6cb;
+                  border-radius: 5px; margin: 20px;'>
+                  <h4>Disclaimer:</h4>
+                  <p>No data is currently available for display.</p>
+                  <p>This could be due to various reasons, including insufficient data,
+                     an error in data retrieval, or no relevant records found.</p>
+                  <p>Please check back later or adjust your filters to explore the available data.</p>
+                  </div> ")
+        })
+      } else {
+        output$explorePanel <- renderUI({
+          tagList(
+                  timeline$ui(session$ns("timeline")),
+                  uiOutput(session$ns("imageUI")),
+                  leaflet$ui(session$ns("exploremap")),
+                  render_table$ui(session$ns("occurence_filtered"))
+              )
+          })
+      }
+    })
 
     observeEvent(Variables$filters$scientificName, ignoreInit = TRUE,{
       req(Variables$filters$scientificName)

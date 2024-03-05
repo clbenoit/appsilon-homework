@@ -70,11 +70,11 @@ server <- function(id, data, variables) {
 
     })
 
-    # observe({
-    #   print("WARNING GROUPS ARE FALSE")
-    #   print(head(timeline_dataframes()[[1]]))
-    #   print(head(timeline_dataframes()[[2]]))
-    # })
+    observe({
+      print("WARNING GROUPS ARE FALSE")
+      print(head(timeline_dataframes()[[1]]))
+      print(head(timeline_dataframes()[[2]]))
+    })
 
     output$timevisui <- renderTimevis({
     #output$timeline <- renderUI({renderTimevis(

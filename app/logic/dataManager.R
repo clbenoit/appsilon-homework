@@ -22,10 +22,6 @@ DataManager <- R6::R6Class(
                                    occurence_filtered = NULL),
     filterbyscientificName = function(scientificNameFilter) {
       observeEvent(scientificNameFilter, {
-
-        print("daidahda")
-        print(scientificNameFilter)
-
         self$filtered_data$occurence_filtered <- dbGetQuery(self$con,
           paste("SELECT * FROM occurence WHERE scientificName IN (",
             paste0("'", paste(scientificNameFilter, collapse = "','"), "'"),

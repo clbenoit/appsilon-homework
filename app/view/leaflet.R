@@ -2,7 +2,7 @@
 
 box::use(
   reactable,
-  shiny[h3, moduleServer, NS, tagList, fluidRow, column,observe,req,icon,
+  shiny[h3, moduleServer, NS, tagList, fluidRow, column,observe,req,icon, withProgress,
         uiOutput,renderUI,img,observeEvent],
   leaflet[makeIcon,leafletOutput,renderLeaflet,addTiles,setView,addProviderTiles,addMarkers,leaflet],
   dplyr[`%>%`,filter],
@@ -32,6 +32,7 @@ server <- function(id, data, session) {
     #observe({
       output$leafletMap <- renderLeaflet({
         req(data$occurence_filtered)
+        withProgress(message = 'Rendering maps', value = 0, {
         #leaflet(data = data) %>%
         leaflet(data = data$occurence_filtered) %>%
           addTiles() %>%
@@ -40,6 +41,7 @@ server <- function(id, data, session) {
             icon = icon("location-dot"), popup = ~individualCount, label = ~individualCount,
             layerId = ~id
           )
+        })
       })
 
     ##### THIS WORKS ONLY WHEN THE DATA PROVIDED TO LEAFLET IS NOT REACTIVE I DON'T GET WHY ####
@@ -53,7 +55,6 @@ server <- function(id, data, session) {
       if (!is.null(click_info)) {
         # Extract the id of the clicked marker
         clicked_id <- data$id[data$longitudeDecimal == click_info$lng & data$latitudeDecimal == click_info$lat]
-
         # Print the id to the console (you can use it as needed)
         print(clicked_id)
       }

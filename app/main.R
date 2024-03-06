@@ -18,9 +18,7 @@ box::use(
 )
 ## Import shiny modules
 box::use(
-  app/view/render_table,
-  app/view/leaflet,
-  app/view/timeline,
+  app/view/explore_panel,
   app/logic/variablesManager[Variables],
   app/logic/dataManager[DataManager],
 )
@@ -57,15 +55,17 @@ ui <- function(id) {
                              selectizeInput(inputId = ns("scientificName"),
                                             label = "scientificName",
                                             choices = NULL, width = "100%",
-                                            multiple  = TRUE)),
+                                            multiple  = TRUE,
+                                            options = list(maxItems = 3))),
                       column(width = 6,class = "specie-area",
                              selectizeInput(inputId = ns("vernacularName"),
                                             label = "vernacularName",
                                             choices = NULL, width = "100%",
-                                            multiple  = TRUE))
+                                            multiple  = TRUE,
+                                            options = list(maxItems = 3)))
                       ),
       nav_panel(title = "Explore",
-               uiOutput(ns("explorePanel"))
+               explore_panel$ui(ns("explorepanel"))
                ),
       nav_panel(title = "Count",
       ),
@@ -90,52 +90,27 @@ server <- function(id) {
 
     updateSelectizeInput(session = session, inputId = "scientificName", choices = DataManager$scientificName_choices, server = TRUE)
     updateSelectizeInput(session = session, inputId = "vernacularName", choices = DataManager$vernacularName_choices, server = TRUE)
-    selected_specie <- reactiveVal(0)
+    selected_species <- reactiveVal(0)
     observeEvent(input$scientificName, ignoreInit = TRUE,{
       req(input$scientificName)
       print("update specie id (scientificaly based)")
-      selected_specie(input$scientificName)
+      DataManager$filtered_data$selected_species <- input$scientificName
       Variables$set_scientificName(names(DataManager$scientificName_choices[DataManager$scientificName_choices %in% input$scientificName]))
     })
     observeEvent(input$vernacularName,ignoreInit = TRUE, {
       print("update specie id (vernacularaly based)")
-        selected_specie(input$vernacularName)
+        DataManager$filtered_data$selected_species <- input$vernacularName
+
     })
-    observeEvent(selected_specie(), ignoreInit = TRUE,{
-        req(selected_specie())
+    observeEvent(DataManager$filtered_data$selected_species, ignoreInit = TRUE,{
+        req(DataManager$filtered_data$selected_species)
         print("update select inputs")
           updateSelectizeInput(session = session, inputId = "scientificName",
                                choices = DataManager$scientificName_choices,
-                               selected = selected_specie(), server = TRUE)
+                               selected = DataManager$filtered_data$selected_species, server = TRUE)
           updateSelectizeInput(session = session, inputId = "vernacularName",
                                choices = DataManager$vernacularName_choices,
-                               selected = selected_specie(), server = TRUE)
-    })
-
-    observeEvent(selected_specie(),{
-      if(selected_specie() == 0){
-        output$explorePanel <- renderUI({
-            HTML("<div style='text-align: center; padding: 20px;
-                  background-color: #f8d7da;
-                  color: #721c24; border: 1px solid #f5c6cb;
-                  border-radius: 5px; margin: 20px;'>
-                  <h4>Disclaimer:</h4>
-                  <p>No data is currently available for display.</p>
-                  <p>This could be due to various reasons, including insufficient data,
-                     an error in data retrieval, or no relevant records found.</p>
-                  <p>Please check back later or adjust your filters to explore the available data.</p>
-                  </div> ")
-        })
-      } else {
-        output$explorePanel <- renderUI({
-          tagList(
-                  timeline$ui(session$ns("timeline")),
-                  uiOutput(session$ns("imageUI")),
-                  leaflet$ui(session$ns("exploremap")),
-                  render_table$ui(session$ns("occurence_filtered"))
-              )
-          })
-      }
+                               selected = DataManager$filtered_data$selected_species, server = TRUE)
     })
 
     observeEvent(Variables$filters$scientificName, ignoreInit = TRUE,{
@@ -143,30 +118,7 @@ server <- function(id) {
       DataManager$filterbyscientificName(Variables$filters$scientificName)
     })
 
-    timeline$server("timeline", data = DataManager$filtered_data, variables = Variables)
-    render_table$server("occurence_filtered", data = DataManager$filtered_data)
-    leaflet$server("exploremap", data = DataManager$filtered_data, session)
-
-    observe({
-      if(is.null(Variables$markers$timeline)){
-        output$imageUI <- renderUI({
-          tagList("Select an observation in timeline first")
-        })
-      } else {
-        DataManager$selectPhoto(Variables$markers$timeline)
-        src <- DataManager$multimedia$selected_photo
-        if(length(src) == 0){
-          print(Variables$markers$timeline)
-          output$imageUI <- renderUI({
-            tagList("This obesvation does not have associated pictures")
-          })
-        } else {
-          output$imageUI  <- renderUI({
-            tags$img(src=src, width = 200, height = 100)
-          })
-        }
-      }
-    })
+    explore_panel$server("explorepanel", data = DataManager, variables = Variables)
 
   })
 }

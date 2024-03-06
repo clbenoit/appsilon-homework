@@ -15,9 +15,9 @@ DataManager <- R6::R6Class(
     species_names_match = NULL,
     scientificName_choices = NULL,
     vernacularName_choices = NULL,
-    occurence = NULL,
-    multimedia = reactiveValues(selected_photo = NULL),
-    filtered_data = reactiveValues(occurence_specie = NULL,
+    multimedia = reactiveValues(selected_photo = NULL, creator = NULL),
+    filtered_data = reactiveValues(selected_species = 0,
+                                   occurence_specie = NULL,
                                    occurence_specie_continent = NULL,
                                    occurence_filtered = NULL),
     filterbyscientificName = function(scientificNameFilter) {
@@ -42,13 +42,15 @@ DataManager <- R6::R6Class(
     selectPhoto = function(observation_id) {
       observeEvent(observation_id, {
         req(observation_id)
+        print("a")
         query_result <- dbGetQuery(self$con,
-                                   paste("SELECT accessURI FROM multimedia WHERE id = ",
+                                   paste("SELECT accessURI, creator FROM multimedia WHERE id = ",
                                          observation_id,
                                          ";", sep = "")
-        )$accessURI
-        print(query_result)
-        self$multimedia$selected_photo <- query_result
+        )
+        print("b")
+        self$multimedia$selected_photo <- query_result$accessURI
+        self$multimedia$creator <- query_result$creator
       })
     },
     loadDb = function() {

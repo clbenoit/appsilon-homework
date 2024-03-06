@@ -3,7 +3,7 @@
 box::use(
   reactable,
   shiny[h3, moduleServer, NS, tagList, fluidRow, column, req, observe, observeEvent,
-        reactive,
+        reactive, withProgress,
         HTML, renderUI, uiOutput],
   timevis[timevis, renderTimevis,timevisOutput],
   utils[head],
@@ -25,9 +25,11 @@ ui <- function(id) {
 server <- function(id, data, variables) {
   moduleServer(id, function(input, output, session) {
 
+    ns <- session$ns
+
     timeline_dataframes <- reactive({
       req(data$occurence_filtered)
-
+      withProgress(message = 'Computing timeline data', value = 0, {
       #data$occurence_filtered <- data$occurence_filtered[1:100, ]
 
       timeline_occurence <- data$occurence_filtered
@@ -56,7 +58,6 @@ server <- function(id, data, variables) {
         content = content_html,
         group_content = factor(timeline_occurence$scientificName)
       )
-
       timeline_occurence$group <- as.numeric(timeline_occurence$group_content)
 
       timeline_groups <- data.frame(
@@ -67,7 +68,7 @@ server <- function(id, data, variables) {
         timeline_occurence,
         timeline_groups
       ))
-
+      })
     })
 
     observe({
@@ -77,19 +78,19 @@ server <- function(id, data, variables) {
     })
 
     output$timevisui <- renderTimevis({
-    #output$timeline <- renderUI({renderTimevis(
+      withProgress(message = 'Rendering timeline data', value = 0, {
       timevis(timeline_dataframes()[[1]],
-      #timevis(timeline_dataframes(),
               options = list(cluster = TRUE,
                              cluster.maxItems = 3),
               groups = timeline_dataframes()[[2]]
-              #groups = timeline_dataframes()
        )
+      })
     })
 
     observeEvent(input$timevisui_selected, {
       selected_marker <- tryCatch(as.numeric(input$timevisui_selected),
                                   warning = function(w){return(NULL)})
+
       variables$markers$timeline  <- selected_marker
     })
 

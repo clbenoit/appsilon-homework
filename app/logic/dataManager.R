@@ -42,13 +42,11 @@ DataManager <- R6::R6Class(
     selectPhoto = function(observation_id) {
       observeEvent(observation_id, {
         req(observation_id)
-        print("a")
         query_result <- dbGetQuery(self$con,
                                    paste("SELECT accessURI, creator FROM multimedia WHERE id = ",
                                          observation_id,
                                          ";", sep = "")
         )
-        print("b")
         self$multimedia$selected_photo <- query_result$accessURI
         self$multimedia$creator <- query_result$creator
       })

@@ -21,17 +21,26 @@ server <- function(id, data, variables) {
 
     taglist <- reactive({
       if(is.null(variables$markers$timeline)){
-        print("is.null(variables$markers$timeline")
+          print("is.null(variables$markers$timeline")
           return(tagList(div("Select an observation in timeline first"), br()))
       } else {
         data$selectPhoto(variables$markers$timeline)
         if(length(data$multimedia$selected_photo) == 0){
             return("This observation does not have associated pictures")
+        } else if (length(data$multimedia$selected_photo) == 1){
+          print("length1")
+          return(tagList(
+            img(src=data$multimedia$selected_photo[selected_picture()], width = '100%', height = '80%'),
+            div(paste0("Creator : ", data$multimedia$creator[selected_picture()]))
+           ))
         } else {
+            print("longleng")
             return(
               tagList(
                 img(src=data$multimedia$selected_photo[selected_picture()], width = '100%', height = '80%'),
-                div(paste0("Creator : ", data$multimedia$creator[selected_picture()]))
+                div(paste0("Creator : ", data$multimedia$creator[selected_picture()])),
+                fluidRow(column(width = 6, actionButton(ns('previousbutton'),"previous", width = "100%")),
+                         column(width = 6, actionButton(ns('nextbutton'),"next", width = "100%")))
               )
             )
         }
@@ -59,9 +68,9 @@ server <- function(id, data, variables) {
     output$imageUI  <- renderUI({
       req(taglist())
       tagList(
-        taglist(),
-        fluidRow(column(width = 6, actionButton(ns('previousbutton'),"previous", width = "100%")),
-        column(width = 6, actionButton(ns('nextbutton'),"next", width = "100%"))),
+        taglist()#,
+        # fluidRow(column(width = 6, actionButton(ns('previousbutton'),"previous", width = "100%")),
+        # column(width = 6, actionButton(ns('nextbutton'),"next", width = "100%"))),
       )
     })
 

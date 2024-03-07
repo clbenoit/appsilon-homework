@@ -84,6 +84,9 @@ ui <- function(id) {
 server <- function(id) {
   moduleServer(id, function(input, output, session) {
 
+    future::plan("multisession")
+    #future::plan("multicore")
+
     Variables <- Variables$new()
     DataManager <- DataManager$new()
     DataManager$loadDb()

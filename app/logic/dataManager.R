@@ -88,10 +88,11 @@ DataManager <- R6::R6Class(
       
       species_names_match$family <- tolower(species_names_match$family)
       grouped_data <- split(species_names_match, species_names_match$family)
-      scientificName_choices_selectize <- lapply(grouped_data, function(x){ return(stats::setNames(x$id,x$scientificName))})
-      vernacularName_choices_selectize <- lapply(grouped_data, function(x){ return(stats::setNames(x$id,x$vernacularName))})
+      scientificName_choices_selectize <- lapply(grouped_data, function(x){ return(as.list(stats::setNames(x$id,x$scientificName))) })
+      vernacularName_choices_selectize <- lapply(grouped_data, function(x){ return(as.list(stats::setNames(x$id,x$vernacularName)))})
       self$vernacularName_choices_selectize <- vernacularName_choices_selectize
       self$scientificName_choices_selectize <- scientificName_choices_selectize
+      #### WARNING FAMILIES WITH 1 SPECIE ONLY DO NOT RENDER PROPERLY #### scientificName and vernacularName are replaced by family name
       
       }
     )

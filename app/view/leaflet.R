@@ -56,6 +56,7 @@ server <- function(id, data, session) {
             scientificName == scientificNames[3]  ~ 'yellow'
           ))
       }
+      leaflet_occurence(leaflet_occurence_tmp)
     })
 
     #observe({

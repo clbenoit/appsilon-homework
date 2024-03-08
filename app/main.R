@@ -91,8 +91,8 @@ server <- function(id) {
     DataManager <- DataManager$new()
     DataManager$loadDb()
 
-    updateSelectizeInput(session = session, inputId = "scientificName", choices = DataManager$scientificName_choices, server = TRUE)
-    updateSelectizeInput(session = session, inputId = "vernacularName", choices = DataManager$vernacularName_choices, server = TRUE)
+    updateSelectizeInput(session = session, inputId = "scientificName", choices = DataManager$scientificName_choices_selectize, server = TRUE)
+    updateSelectizeInput(session = session, inputId = "vernacularName", choices = DataManager$vernacularName_choices_selectize, server = TRUE)
     selected_species <- reactiveVal(0)
     observeEvent(input$scientificName, ignoreInit = TRUE,{
       req(input$scientificName)
@@ -109,10 +109,10 @@ server <- function(id) {
         req(DataManager$filtered_data$selected_species)
         print("update select inputs")
           updateSelectizeInput(session = session, inputId = "scientificName",
-                               choices = DataManager$scientificName_choices,
+                               choices = DataManager$scientificName_choices_selectize,
                                selected = DataManager$filtered_data$selected_species, server = TRUE)
           updateSelectizeInput(session = session, inputId = "vernacularName",
-                               choices = DataManager$vernacularName_choices,
+                               choices = DataManager$vernacularName_choices_selectize,
                                selected = DataManager$filtered_data$selected_species, server = TRUE)
     })
 

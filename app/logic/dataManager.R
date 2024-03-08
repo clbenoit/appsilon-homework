@@ -15,6 +15,8 @@ DataManager <- R6::R6Class(
     species_names_match = NULL,
     scientificName_choices = NULL,
     vernacularName_choices = NULL,
+    scientificName_choices_selectize = NULL,
+    vernacularName_choices_selectize = NULL,
     multimedia = reactiveValues(selected_photo = NULL, creator = NULL),
     filtered_data = reactiveValues(selected_species = 0,
                                    occurence_specie = NULL,
@@ -70,18 +72,27 @@ DataManager <- R6::R6Class(
         shinyOptions(cache = cachem::cache_disk(config::get("cache_directory")))
       }
 
-      species_names_match <- dbGetQuery(con, "SELECT DISTINCT vernacularName, scientificName FROM occurence;")
-      species_names_match$id <- seq(1:nrow(species_names_match))
+      species_names_match <- dbGetQuery(con, "SELECT DISTINCT vernacularName, scientificName, family FROM occurence;")
       species_names_match[is.na(species_names_match[,1]),] <- species_names_match[is.na(species_names_match[,1]),2]
       species_names_match[is.na(species_names_match[,2]),] <- species_names_match[is.na(species_names_match[,2]),1]
+      species_names_match$id <- seq(1:nrow(species_names_match))
+      
+      
       scientificName_choices <-  species_names_match$id
       names(scientificName_choices) <- species_names_match$scientificName
       vernacularName_choices <- species_names_match$id
       names(vernacularName_choices) <- species_names_match$vernacularName
-
       self$scientificName_choices <- scientificName_choices
       self$vernacularName_choices <- vernacularName_choices
       self$species_names_match <- species_names_match
+      
+      species_names_match$family <- tolower(species_names_match$family)
+      grouped_data <- split(species_names_match, species_names_match$family)
+      scientificName_choices_selectize <- lapply(grouped_data, function(x){ return(stats::setNames(x$id,x$scientificName))})
+      vernacularName_choices_selectize <- lapply(grouped_data, function(x){ return(stats::setNames(x$id,x$vernacularName))})
+      self$vernacularName_choices_selectize <- vernacularName_choices_selectize
+      self$scientificName_choices_selectize <- scientificName_choices_selectize
+      
       }
     )
 )

@@ -3,9 +3,9 @@
 box::use(
   reactable,
   shiny[h3, moduleServer, NS, tagList, fluidRow, column,observe,req,icon, withProgress,
-        uiOutput,renderUI,img,observeEvent],
+        uiOutput,renderUI,img,observeEvent, reactiveVal],
   leaflet[makeIcon,leafletOutput,renderLeaflet,addTiles,setView,addProviderTiles,addMarkers,leaflet],
-  dplyr[`%>%`,filter],
+  dplyr[`%>%`,filter, mutate, case_when],
   utils[head],
 )
 #' @export
@@ -29,16 +29,45 @@ server <- function(id, data, session) {
     #   longitudeDecimal = c(-0.09, -0.1, -0.12),
     #   individualCount = c("Marker 1", "Marker 2", "Marker 3")
     # )
+    icons <- leaflet::iconList(blue = leaflet::makeIcon("www/location-dot-blue.svg", iconWidth = 24, iconHeight =32),
+                      yellow = leaflet::makeIcon("www/location-dot-yellow.svg", iconWidth = 24, iconHeight =32),
+                      green = leaflet::makeIcon("www/location-dot-green.svg", iconWidth = 24, iconHeight =32),
+                      red = leaflet::makeIcon("www/location-dot-red.svg", iconWidth = 24, iconHeight =32))
+
+    leaflet_occurence <- reactiveVal()
+    observe({
+      req(data$occurence_filtered)
+      scientificNames <- unique(data$occurence_filtered$scientificName)
+      leaflet_occurence_tmp <- data$occurence_filtered
+      leaflet_occurence_tmp$color <- "blue"
+      if(length(scientificNames) == 2) {
+        print("length(scientificNames) : ")
+        print(length(scientificNames))
+        leaflet_occurence_tmp <- leaflet_occurence_tmp %>%
+          mutate(color = case_when(
+            scientificName == scientificNames[1]  ~ 'blue',
+            scientificName == scientificNames[2]  ~ 'green'
+          ))
+      } else if(length(scientificNames) == 3){
+        leaflet_occurence_tmp <- leaflet_occurence_tmp %>%
+          mutate(color = case_when(
+            scientificName == scientificNames[1]  ~ 'blue',
+            scientificName == scientificNames[2]  ~ 'green',
+            scientificName == scientificNames[3]  ~ 'yellow'
+          ))
+      }
+    })
+
     #observe({
       output$leafletMap <- renderLeaflet({
-        req(data$occurence_filtered)
+        req(leaflet_occurence())
+
         withProgress(message = 'Rendering maps', value = 0, {
-        #leaflet(data = data) %>%
-        leaflet(data = data$occurence_filtered) %>%
+        leaflet(data =  leaflet_occurence()) %>%
           addTiles() %>%
           addMarkers(
             ~longitudeDecimal, ~latitudeDecimal,
-            icon = icon("location-dot"), popup = ~individualCount, label = ~individualCount,
+            icon = ~icons[color], popup = ~individualCount, label = ~individualCount,
             layerId = ~id
           )
         })

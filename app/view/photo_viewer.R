@@ -22,11 +22,11 @@ server <- function(id, data, variables) {
     taglist <- reactive({
       if(is.null(variables$markers$timeline)){
           print("is.null(variables$markers$timeline")
-          return(tagList(div("Select an observation in timeline first"), br()))
+          return(tagList(div(class = "empty-blue", "Select an observation in timeline to see its associated pictures")))#, br()))
       } else {
         data$selectPhoto(variables$markers$timeline)
         if(length(data$multimedia$selected_photo) == 0){
-            return("This observation does not have associated pictures")
+            return(div(class = "empty-blue", "This observation does not have associated pictures"))
         } else if (length(data$multimedia$selected_photo) == 1){
           print("length1")
           return(tagList(

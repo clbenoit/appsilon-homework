@@ -31,10 +31,7 @@ server <- function(id, data, variables) {
     observeEvent(data$filtered_data$selected_species,{
       if(0 %in% data$filtered_data$selected_species){
         output$explorePanel <- renderUI({
-          HTML("<div style='text-align: center; padding: 20px;
-                  background-color: #f8d7da;
-                  color: #721c24; border: 1px solid #f5c6cb;
-                  border-radius: 5px; margin: 20px;'>
+          HTML("<div class ='empty-red'>
                   <h4>Disclaimer:</h4>
                   <p>No data is currently available for display.</p>
                   <p>This could be due to various reasons, including insufficient data,

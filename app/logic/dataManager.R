@@ -1,6 +1,6 @@
 box::use(
   R6[R6Class],
-  shiny[reactiveValues, observeEvent, shinyOptions, req],
+  shiny[reactiveValues, observeEvent, shinyOptions, req, reactiveVal],
   RSQLite[SQLite],
   DBI[dbReadTable, dbConnect,dbGetQuery],
   dplyr[`%>%`, filter],
@@ -12,11 +12,13 @@ DataManager <- R6::R6Class(
   classname = "DataManager",
   public = list(
     con = NULL,
+    species_choices = reactiveValues(
     species_names_match = NULL,
     scientificName_choices = NULL,
     vernacularName_choices = NULL,
     scientificName_choices_selectize = NULL,
-    vernacularName_choices_selectize = NULL,
+    vernacularName_choices_selectize = NULL
+    ),
     multimedia = reactiveValues(selected_photo = NULL, creator = NULL),
     filtered_data = reactiveValues(selected_species = 0,
                                    occurence_specie = NULL,
@@ -53,7 +55,7 @@ DataManager <- R6::R6Class(
         self$multimedia$creator <- query_result$creator
       })
     },
-    loadDb = function() {
+    loadDb = function(taxonRank) {
       print("inside load DB")
 
       Sys.setenv(R_CONFIG_ACTIVE = "devel") # rundant with server side for now
@@ -72,28 +74,51 @@ DataManager <- R6::R6Class(
         shinyOptions(cache = cachem::cache_disk(config::get("cache_directory")))
       }
 
-      species_names_match <- dbGetQuery(con, "SELECT DISTINCT vernacularName, scientificName, family FROM occurence;")
-      species_names_match[is.na(species_names_match[,1]),] <- species_names_match[is.na(species_names_match[,1]),2]
-      species_names_match[is.na(species_names_match[,2]),] <- species_names_match[is.na(species_names_match[,2]),1]
-      species_names_match$id <- seq(1:nrow(species_names_match))
+      if("All" %in% taxonRank){
+        species_names_match <- dbGetQuery(con, "SELECT DISTINCT vernacularName, scientificName, family FROM occurence;")
+        print("nrow(species_names_match)")
+        print(nrow(species_names_match))
+        
+      } else {
+        
+        # self$filtered_data$occurence_filtered <- dbGetQuery(self$con,
+        #                                                     paste("SELECT * FROM occurence WHERE scientificName IN (",
+        #                                                           paste0("'", paste(scientificNameFilter, collapse = "','"), "'"),
+        #                                                           ");", sep = "")
+        # )
+        
+        species_names_match <- dbGetQuery(con, paste("SELECT DISTINCT vernacularName, scientificName, family FROM occurence WHERE taxonRank IN (",
+                                          paste0("'", paste(taxonRank, collapse = "','"), "'"),
+                                          ");", sep = ""))
+        print("nrow(species_names_match)")
+        
+        print(nrow(species_names_match))
+      }
+      if(nrow(species_names_match) > 0){
+        species_names_match[is.na(species_names_match[,1]),] <- species_names_match[is.na(species_names_match[,1]),2]
+        species_names_match[is.na(species_names_match[,2]),] <- species_names_match[is.na(species_names_match[,2]),1]
+        species_names_match$id <- seq(1:nrow(species_names_match))
       
+        scientificName_choices <-  species_names_match$id
+        names(scientificName_choices) <- species_names_match$scientificName
+        vernacularName_choices <- species_names_match$id
+        names(vernacularName_choices) <- species_names_match$vernacularName
+        # self$scientificName_choices <- scientificName_choices
+        # self$vernacularName_choices <- vernacularName_choices
+        # self$species_names_match <- species_names_match
+        self$species_choices$scientificName_choices <- scientificName_choices
+        self$species_choices$vernacularName_choices <- vernacularName_choices
+        self$species_choices$species_names_match <- species_names_match
       
-      scientificName_choices <-  species_names_match$id
-      names(scientificName_choices) <- species_names_match$scientificName
-      vernacularName_choices <- species_names_match$id
-      names(vernacularName_choices) <- species_names_match$vernacularName
-      self$scientificName_choices <- scientificName_choices
-      self$vernacularName_choices <- vernacularName_choices
-      self$species_names_match <- species_names_match
-      
-      species_names_match$family <- tolower(species_names_match$family)
-      grouped_data <- split(species_names_match, species_names_match$family)
-      scientificName_choices_selectize <- lapply(grouped_data, function(x){ return(as.list(stats::setNames(x$id,x$scientificName))) })
-      vernacularName_choices_selectize <- lapply(grouped_data, function(x){ return(as.list(stats::setNames(x$id,x$vernacularName)))})
-      self$vernacularName_choices_selectize <- vernacularName_choices_selectize
-      self$scientificName_choices_selectize <- scientificName_choices_selectize
-      #### WARNING FAMILIES WITH 1 SPECIE ONLY DO NOT RENDER PROPERLY #### scientificName and vernacularName are replaced by family name
-      
+        species_names_match$family <- tolower(species_names_match$family)
+        grouped_data <- split(species_names_match, species_names_match$family)
+        scientificName_choices_selectize <- lapply(grouped_data, function(x){ return(as.list(stats::setNames(x$id,x$scientificName))) })
+        vernacularName_choices_selectize <- lapply(grouped_data, function(x){ return(as.list(stats::setNames(x$id,x$vernacularName)))})
+        # self$vernacularName_choices_selectize <- vernacularName_choices_selectize
+        # self$scientificName_choices_selectize <- scientificName_choices_selectize
+        self$species_choices$vernacularName_choices_selectize <- vernacularName_choices_selectize
+        self$species_choices$scientificName_choices_selectize <- scientificName_choices_selectize
+        }
       }
     )
 )

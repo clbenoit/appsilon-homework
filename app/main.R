@@ -19,6 +19,7 @@ box::use(
 ## Import shiny modules
 box::use(
   app/view/select_species,
+  app/view/main_sidebar,
   app/view/explore_panel,
   app/logic/variablesManager[Variables],
   app/logic/dataManager[DataManager],
@@ -77,7 +78,7 @@ server <- function(id) {
 
     Variables <- Variables$new()
     DataManager <- DataManager$new()
-    DataManager$loadDb()
+    DataManager$loadDb("All")
     
     select_species$server("select_species", data= DataManager, variables = Variables)
     explore_panel$server("explorepanel", data = DataManager, variables = Variables)

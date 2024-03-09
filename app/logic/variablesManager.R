@@ -9,6 +9,7 @@ Variables <- R6::R6Class(
   public = list(
     scientificName = NULL,
     vernacularName= NULL,
+    #taxonRank = ractiveVal("All"),
     #set_speciedID = NULL,
     filters = reactiveValues(vernacularName = NULL),
     markers =  reactiveValues(timeline = NULL),

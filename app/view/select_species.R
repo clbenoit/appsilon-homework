@@ -5,13 +5,29 @@ box::use(
   shiny[h3, moduleServer, NS, tagList, fluidRow, column, req, observe, reactive, 
         reactiveVal, observeEvent, 
         selectizeInput, updateSelectizeInput, reactiveValues, bindEvent],
+  # shinyWidgets[...]
 )
 
 #' @export
 ui <- function(id) {
   ns <- NS(id)
   tagList(
-    fluidRow(class = "specie-area",
+    fluidRow(
+                      column(width = 12, 
+                             #pickerInput would have been a better to select All choices option but https://github.com/dreamRs/shinyWidgets/issues/460 
+                             selectizeInput(inputId = ns("taxonRank"), label = "taxonRank",
+                                                       width = '100%',
+                                                       multiple = TRUE,
+                                                         options = list(`actions-box` = TRUE,
+                                                                        `deselect-all-text` = "None...",
+                                                                        `select-all-text` = "Yeah, all !",
+                                                                        `none-selected-text` = "zero"),
+                                                         choices = c("All","species",
+                                                                    "multispecies","subspecies",
+                                                                    "synonym", "forma",
+                                                                    "hybrid", "variety"),
+                                                       selected = "species")
+                             ),
                       column(width = 6, class = "specie-area",
                              selectizeInput(inputId = ns("scientificName"),
                                             label = "scientificName",
@@ -32,8 +48,15 @@ ui <- function(id) {
 server <- function(id, data, variables) {
   moduleServer(id, function(input, output, session) {
     
-    updateSelectizeInput(session = session, inputId = "scientificName", choices = data$scientificName_choices_selectize, server = TRUE)
-    updateSelectizeInput(session = session, inputId = "vernacularName", choices = data$vernacularName_choices_selectize, server = TRUE)
+    observeEvent(input$taxonRank, ignoreInit = TRUE, {
+      req(input$taxonRank)
+      data$loadDb(input$taxonRank)
+    })
+    
+    observeEvent(data$species_choices$scientificName_choices_selectize,{
+      updateSelectizeInput(session = session, inputId = "scientificName", choices = data$species_choices$scientificName_choices_selectize, server = TRUE)
+      updateSelectizeInput(session = session, inputId = "vernacularName", choices = data$species_choices$vernacularName_choices_selectize, server = TRUE)
+    })
     
     # keep track of whether we are allowed to update the inputs. Default both to TRUE
     allow_update <- reactiveValues(vernacularName = TRUE, scientificName = TRUE, time = 10)
@@ -52,9 +75,9 @@ server <- function(id, data, variables) {
     observe({
       allow_update$scientificName <- FALSE
       allow_update$time <- Sys.time()
-      #   updateSelectizeInput(session, "scientificName", selected = data$species_names_match %>% dplyr::filter(`vernacularName` == input$vernacularName)[,"scientificName"])
-      updateSelectizeInput(session, inputId = "scientificName", choices = data$scientificName_choices_selectize,
-                           selected = data$species_names_match[data$species_names_match$id %in% input$vernacularName, "id"]
+      #   updateSelectizeInput(session, "scientificName", selected = data$species_names_match() %>% dplyr::filter(`vernacularName` == input$vernacularName)[,"scientificName"])
+      updateSelectizeInput(session, inputId = "scientificName", choices = data$species_choices$scientificName_choices_selectize,
+                           selected = data$species_choices$species_names_match[data$species_choices$species_names_match$id %in% input$vernacularName, "id"]
       )
       
     }) |>
@@ -63,9 +86,9 @@ server <- function(id, data, variables) {
     observe({
       allow_update$vernacularName <- FALSE
       allow_update$time <- Sys.time()
-      #updateSelectizeInput(session, "vernacularName", selected = data$species_names_match %>% dplyr::filter(`scientificName` == input$scientificName)[,"vernacularName"])
-      updateSelectizeInput(session, inputId = "vernacularName", choices = data$vernacularName_choices_selectize,
-                           selected = data$species_names_match[data$species_names_match$id %in% input$scientificName, "id"]
+      #updateSelectizeInput(session, "vernacularName", selected = data$species_names_match() %>% dplyr::filter(`scientificName` == input$scientificName)[,"vernacularName"])
+      updateSelectizeInput(session, inputId = "vernacularName", choices = data$species_choices$vernacularName_choices_selectize,
+                           selected = data$species_choices$species_names_match[data$species_choices$species_names_match$id %in% input$scientificName, "id"]
       )
       
       #input$scientificName)
@@ -97,7 +120,7 @@ server <- function(id, data, variables) {
       req(input$scientificName)
       print("update specie id (scientificaly based)")
       data$filtered_data$selected_species <- input$scientificName
-      variables$set_scientificName(names(data$scientificName_choices[data$scientificName_choices %in% input$scientificName]))
+      variables$set_scientificName(names(data$species_choices$scientificName_choices[data$species_choices$scientificName_choices %in% input$scientificName]))
     })
     observeEvent(input$vernacularName,ignoreInit = TRUE, {
       print("update specie id (vernacularaly based)")
@@ -108,10 +131,10 @@ server <- function(id, data, variables) {
     #     req(data$filtered_data$selected_species)
     #     print("update select inputs")
     #       updateSelectizeInput(session = session, inputId = "scientificName",
-    #                            choices = data$scientificName_choices_selectize,
+    #                            choices = data$species_choices$scientificName_choices_selectize(),
     #                            selected = data$filtered_data$selected_species, server = TRUE)
     #       updateSelectizeInput(session = session, inputId = "vernacularName",
-    #                            choices = data$vernacularName_choices_selectize,
+    #                            choices = data$species_choices$vernacularName_choices()_selectize(),
     #                            selected = data$filtered_data$selected_species, server = TRUE)
     # })
     

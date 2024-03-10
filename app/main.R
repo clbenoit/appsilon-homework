@@ -36,12 +36,15 @@ ui <- function(id) {
   ns <- NS(id)
   useShinyjs()  # Initialize shinyjs
   bootstrapPage(
-      page_navbar(id = ns("page_navbar"),
-      sidebar = sidebar(id = ns("main_sidebar"),
+      page_navbar(id = ns("page_navbar"),theme = bs_theme(bootswatch = "lumen", bg = "#FCFDFD", fg = "rgb(25, 125, 85)"),
+                                                          #primary = "#2780E3"),
+      sidebar = sidebar(id = ns("main_sidebar"), #title = div(style = "text-align:center", 'Supplementary filters'),
+          #shiny::h5(div(style = "text-align:center", 'Supplementary filters')),
                         #'sidebar text'),
+          title = "Filter observations",
           conditionalPanel(ns=ns,
             "input.page_navbar === 'Explore' || input.page_navbar === 'Count'",
-            "Page 1 sidebar"
+            main_sidebar$ui(ns("main_sidebar"))
           ),
           conditionalPanel(ns=ns,
             "input.page_navbar === 'Contributors'",
@@ -64,14 +67,23 @@ ui <- function(id) {
         title = "Links",
         align = "right",
         nav_item(link_posit)
-      )
+      ),
+    ),
+    footer = fluidRow(column(width = 12, 
+                             div(style = "text-align: right; padding: 1%;",
+                              shiny::HTML("Copyright <a href='https://observation-international.org'
+                                         target='_blank'>Observation International</a> 2024")
+                             )
+                            )
+                      )
     )
-  )
 }
 
 #' @export
 server <- function(id) {
+  
   moduleServer(id, function(input, output, session) {
+    
 
     future::plan("multisession")
     #future::plan("multicore")
@@ -82,6 +94,8 @@ server <- function(id) {
     
     select_species$server("select_species", data= DataManager, variables = Variables)
     explore_panel$server("explorepanel", data = DataManager, variables = Variables)
+    main_sidebar$server("main_sidebar", data = DataManager, variables = Variables)
+    
 
   })
 }

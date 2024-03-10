@@ -8,6 +8,7 @@ box::use(
   timevis[timevis, renderTimevis,timevisOutput],
   utils[head],
   shiny.info[display],
+  bslib[card_header, card, card_body], 
   future[...],
   promises[...]
 )
@@ -16,9 +17,19 @@ box::use(
 ui <- function(id) {
   ns <- NS(id)
   tagList(
-    fluidRow(column(width = 12,
-                    timevisOutput(ns("timevisui"))
-    ))
+    fluidRow(
+      column(width = 12,
+             card(
+               height = "100%",
+               full_screen = TRUE,
+               collapsible = TRUE,
+               card_header("Timeline"),
+               card_body(
+                 class = "p-0",
+                 timevisOutput(ns("timevisui"))
+               )
+             ))
+      )
   )
 }
 
@@ -46,7 +57,6 @@ server <- function(id, data, variables) {
         }
 
         content_html <- c()
-        #save(file = "~/test.rda","timeline_occurence")
         content_html <- apply(timeline_occurence,1, function(observation){
         #content_html <- future.apply::future_apply(timeline_occurence,1, function(observation){
           id <- paste0("ID = ", observation["id"])

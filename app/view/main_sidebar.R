@@ -12,7 +12,7 @@ ui <- function(id) {
   ns <- NS(id)
   tagList(
     fluidRow(
-      #selectizeInput(inputId = ns("taxonRank", label = "taxonRank", multiple = TRUE, selected = NULL)
+      selectizeInput(inputId = ns("lifeStage"), label = "lifeStage", multiple = TRUE, selected = NULL, choices = NULL)
       )
     )
 
@@ -22,17 +22,10 @@ ui <- function(id) {
 server <- function(id, con, data, variables) {
   moduleServer(id, function(input, output, session) {
     
-    #observeEvent({data$filtered_data$occurence_filtered,  
-    
-    # dbGetQuery(self$con,
-    #            paste("SELECT * FROM occurence WHERE scientificName IN (",
-    #                  paste0("'", paste(scientificNameFilter, collapse = "','"), "'"),
-    #                  ");", sep = "")
-    
-   
-   #  
-   # updateSelectizeInput(session, "taxonRank", choices = unique(data$filtered_data$occurence_filtered$taxonRank), selected = )
-  #})
+    observeEvent(data$filtered_data$occurence_filtered,{  
+    lifeStage_values <- unique(data$filtered_data$occurence_filtered$lifeStage)
+    updateSelectizeInput(session, "lifeStage", choices = lifeStage_values, selected = lifeStage_values, server = TRUE)
+    })
     
   })
 }

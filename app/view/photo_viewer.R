@@ -3,13 +3,23 @@
 box::use(
   shiny[h3, moduleServer, NS, tagList, fluidRow, column, req, observe, renderUI, uiOutput,
         reactive, reactiveVal, observeEvent, actionButton,img, div, br],
+  bslib[card_header, card, card_body], 
 )
 
 #' @export
 ui <- function(id) {
   ns <- NS(id)
   tagList(
-    uiOutput(ns("imageUI"))
+    column(width = 12,
+           card(
+             height = "100%",
+             full_screen = TRUE,
+             card_header("Photo Viewer"),
+             card_body(
+               class = "p-0",
+               uiOutput(ns("imageUI"))
+             )
+           ))
   )
 }
 
@@ -21,24 +31,21 @@ server <- function(id, data, variables) {
 
     taglist <- reactive({
       if(is.null(variables$markers$timeline)){
-          print("is.null(variables$markers$timeline")
           return(tagList(div(class = "empty-blue", "Select an observation in timeline to see its associated pictures")))#, br()))
       } else {
         data$selectPhoto(variables$markers$timeline)
         if(length(data$multimedia$selected_photo) == 0){
             return(div(class = "empty-blue", "This observation does not have associated pictures"))
         } else if (length(data$multimedia$selected_photo) == 1){
-          print("length1")
           return(tagList(
-            img(src=data$multimedia$selected_photo[selected_picture()], width = '100%', height = '80%'),
+            img(src=data$multimedia$selected_photo[selected_picture()], width = '100%', height = '80%'),br(),br(),
             div(paste0("Creator : ", data$multimedia$creator[selected_picture()]))
            ))
         } else {
-            print("longleng")
             return(
               tagList(
-                img(src=data$multimedia$selected_photo[selected_picture()], width = '100%', height = '80%'),
-                div(paste0("Creator : ", data$multimedia$creator[selected_picture()])),
+                img(src=data$multimedia$selected_photo[selected_picture()], width = '100%', height = '80%'), br(),br(),
+                div(paste0(" Creator : ", data$multimedia$creator[selected_picture()])), br(),
                 fluidRow(column(width = 6, actionButton(ns('previousbutton'),"previous", width = "100%")),
                          column(width = 6, actionButton(ns('nextbutton'),"next", width = "100%")))
               )

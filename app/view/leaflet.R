@@ -7,15 +7,26 @@ box::use(
   leaflet[makeIcon,leafletOutput,renderLeaflet,addTiles,setView,addProviderTiles,addMarkers,leaflet],
   dplyr[`%>%`,filter, mutate, case_when],
   utils[head],
+  bslib[card_header, card, card_body]
 )
 #' @export
 ui <- function(id) {
   ns <- NS(id)
   tagList(
-    fluidRow(column(width = 12,
-            leafletOutput(outputId = ns("leafletMap")),
-            uiOutput(ns("imageOutput"))
-    ))
+    
+   fluidRow(
+     column(width = 12,
+      card(
+        height = "100%",
+        full_screen = TRUE,
+        card_header("Locations"),
+        card_body(
+          class = "p-0",
+          leaflet::leafletOutput(ns("leafletMap"))
+        )
+        )
+      )
+    )
   )
 }
 

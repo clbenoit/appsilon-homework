@@ -78,7 +78,7 @@ server <- function(id) {
 
     Variables <- Variables$new()
     DataManager <- DataManager$new()
-    DataManager$loadDb("All")
+    DataManager$loadDb("species","Animalia")
     
     select_species$server("select_species", data= DataManager, variables = Variables)
     explore_panel$server("explorepanel", data = DataManager, variables = Variables)

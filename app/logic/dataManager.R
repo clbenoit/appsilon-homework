@@ -55,7 +55,7 @@ DataManager <- R6::R6Class(
         self$multimedia$creator <- query_result$creator
       })
     },
-    loadDb = function(taxonRank) {
+    loadDb = function(taxonRank, kingdom) {
       print("inside load DB")
 
       Sys.setenv(R_CONFIG_ACTIVE = "devel") # rundant with server side for now
@@ -74,27 +74,16 @@ DataManager <- R6::R6Class(
         shinyOptions(cache = cachem::cache_disk(config::get("cache_directory")))
       }
 
-      if("All" %in% taxonRank){
-        species_names_match <- dbGetQuery(con, "SELECT DISTINCT vernacularName, scientificName, family FROM occurence;")
-        print("nrow(species_names_match)")
-        print(nrow(species_names_match))
-        
-      } else {
-        
-        # self$filtered_data$occurence_filtered <- dbGetQuery(self$con,
-        #                                                     paste("SELECT * FROM occurence WHERE scientificName IN (",
-        #                                                           paste0("'", paste(scientificNameFilter, collapse = "','"), "'"),
-        #                                                           ");", sep = "")
-        # )
-        
-        species_names_match <- dbGetQuery(con, paste("SELECT DISTINCT vernacularName, scientificName, family FROM occurence WHERE taxonRank IN (",
-                                          paste0("'", paste(taxonRank, collapse = "','"), "'"),
-                                          ");", sep = ""))
-        print("nrow(species_names_match)")
-        
-        print(nrow(species_names_match))
-      }
-      if(nrow(species_names_match) > 0){
+      species_names_match <- dbGetQuery(con, paste("SELECT DISTINCT vernacularName, scientificName, family 
+                                             FROM occurence 
+                                             WHERE taxonRank IN (",
+                                                   paste0("'", paste(taxonRank, collapse = "','"), "'"),
+                                                   ") 
+                                             AND kingdom IN (",
+                                                   paste0("'", paste(kingdom, collapse = "','"), "'"),
+                                                   ");", sep = ""))
+      
+      
         species_names_match[is.na(species_names_match[,1]),] <- species_names_match[is.na(species_names_match[,1]),2]
         species_names_match[is.na(species_names_match[,2]),] <- species_names_match[is.na(species_names_match[,2]),1]
         species_names_match$id <- seq(1:nrow(species_names_match))
@@ -103,9 +92,6 @@ DataManager <- R6::R6Class(
         names(scientificName_choices) <- species_names_match$scientificName
         vernacularName_choices <- species_names_match$id
         names(vernacularName_choices) <- species_names_match$vernacularName
-        # self$scientificName_choices <- scientificName_choices
-        # self$vernacularName_choices <- vernacularName_choices
-        # self$species_names_match <- species_names_match
         self$species_choices$scientificName_choices <- scientificName_choices
         self$species_choices$vernacularName_choices <- vernacularName_choices
         self$species_choices$species_names_match <- species_names_match
@@ -114,11 +100,8 @@ DataManager <- R6::R6Class(
         grouped_data <- split(species_names_match, species_names_match$family)
         scientificName_choices_selectize <- lapply(grouped_data, function(x){ return(as.list(stats::setNames(x$id,x$scientificName))) })
         vernacularName_choices_selectize <- lapply(grouped_data, function(x){ return(as.list(stats::setNames(x$id,x$vernacularName)))})
-        # self$vernacularName_choices_selectize <- vernacularName_choices_selectize
-        # self$scientificName_choices_selectize <- scientificName_choices_selectize
         self$species_choices$vernacularName_choices_selectize <- vernacularName_choices_selectize
         self$species_choices$scientificName_choices_selectize <- scientificName_choices_selectize
-        }
       }
     )
 )

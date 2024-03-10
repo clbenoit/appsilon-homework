@@ -13,20 +13,23 @@ ui <- function(id) {
   ns <- NS(id)
   tagList(
     fluidRow(
-                      column(width = 12, 
+                      column(width = 6, 
                              #pickerInput would have been a better to select All choices option but https://github.com/dreamRs/shinyWidgets/issues/460 
                              selectizeInput(inputId = ns("taxonRank"), label = "taxonRank",
                                                        width = '100%',
                                                        multiple = TRUE,
-                                                         options = list(`actions-box` = TRUE,
-                                                                        `deselect-all-text` = "None...",
-                                                                        `select-all-text` = "Yeah, all !",
-                                                                        `none-selected-text` = "zero"),
-                                                         choices = c("All","species",
+                                                         choices = c("species",
                                                                     "multispecies","subspecies",
                                                                     "synonym", "forma",
                                                                     "hybrid", "variety"),
-                                                       selected = "species")
+                                                       selected = "species"),
+                      ),
+                      column(width = 6, 
+                             selectizeInput(inputId = ns("kingdom"), label = "kingdom",
+                                            width = '100%',
+                                            multiple = TRUE,
+                                            choices = c("Animalia","Plantae","Fungi"),
+                                            selected = c("Animalia"))
                              ),
                       column(width = 6, class = "specie-area",
                              selectizeInput(inputId = ns("scientificName"),
@@ -48,11 +51,12 @@ ui <- function(id) {
 server <- function(id, data, variables) {
   moduleServer(id, function(input, output, session) {
     
-    observeEvent(input$taxonRank, ignoreInit = TRUE, {
-      req(input$taxonRank)
-      data$loadDb(input$taxonRank)
+    observeEvent(c(input$taxonRank,input$kingdom), ignoreInit = TRUE, {
+      req(input$taxonRank); req(input$kingdom)
+      print('loadingDB')
+      data$loadDb(input$taxonRank,input$kingdom)
     })
-    
+  
     observeEvent(data$species_choices$scientificName_choices_selectize,{
       updateSelectizeInput(session = session, inputId = "scientificName", choices = data$species_choices$scientificName_choices_selectize, server = TRUE)
       updateSelectizeInput(session = session, inputId = "vernacularName", choices = data$species_choices$vernacularName_choices_selectize, server = TRUE)

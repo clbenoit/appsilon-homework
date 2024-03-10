@@ -3,7 +3,7 @@
 box::use(
   reactable,
   shiny[h3, moduleServer, NS, tagList, fluidRow, column, req, observe, observeEvent,
-        reactive, withProgress, reactiveVal,
+        reactive, withProgress, reactiveVal, bindCache, 
         HTML, renderUI, uiOutput],
   timevis[timevis, renderTimevis,timevisOutput],
   utils[head],
@@ -94,7 +94,7 @@ server <- function(id, data, variables) {
               groups = timeline_groups()
        )
      })
-    })
+    }) %>% bindCache(list(timeline_groups(),timeline_occurence()))
 
     observeEvent(input$timevisui_selected, {
       selected_marker <- tryCatch(as.numeric(input$timevisui_selected),

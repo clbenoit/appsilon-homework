@@ -3,7 +3,7 @@
 box::use(
   reactable,
   shiny[h3, moduleServer, NS, tagList, fluidRow, column,observe,req,icon, withProgress,
-        uiOutput,renderUI,img,observeEvent, reactiveVal],
+        uiOutput,renderUI,img,observeEvent, reactiveVal, div, reactive, bindCache ],
   leaflet[makeIcon,leafletOutput,renderLeaflet,addTiles,setView,addProviderTiles,addMarkers,leaflet],
   dplyr[`%>%`,filter, mutate, case_when],
   utils[head],
@@ -22,7 +22,8 @@ ui <- function(id) {
         card_header("Locations"),
         card_body(
           class = "p-0",
-          leaflet::leafletOutput(ns("leafletMap"))
+          uiOutput(ns("leafletMap"))
+          #leaflet::leafletOutput(ns("leafletMap"))
         )
         )
       )
@@ -45,35 +46,39 @@ server <- function(id, data, session) {
                       green = leaflet::makeIcon("www/location-dot-green.svg", iconWidth = 24, iconHeight =32),
                       red = leaflet::makeIcon("www/location-dot-red.svg", iconWidth = 24, iconHeight =32))
 
-    leaflet_occurence <- reactiveVal()
-    observe({
+    leaflet_occurence <- reactive({
       req(data$occurence_filtered)
-      scientificNames <- unique(data$occurence_filtered$scientificName)
-      leaflet_occurence_tmp <- data$occurence_filtered
-      leaflet_occurence_tmp$color <- "blue"
-      if(length(scientificNames) == 2) {
-        print("length(scientificNames) : ")
-        print(length(scientificNames))
-        leaflet_occurence_tmp <- leaflet_occurence_tmp %>%
-          mutate(color = case_when(
-            scientificName == scientificNames[1]  ~ 'blue',
-            scientificName == scientificNames[2]  ~ 'green'
-          ))
-      } else if(length(scientificNames) == 3){
-        leaflet_occurence_tmp <- leaflet_occurence_tmp %>%
-          mutate(color = case_when(
-            scientificName == scientificNames[1]  ~ 'blue',
-            scientificName == scientificNames[2]  ~ 'green',
-            scientificName == scientificNames[3]  ~ 'yellow'
-          ))
-      }
-      leaflet_occurence(leaflet_occurence_tmp)
-    })
+      if(nrow(data$occurence_filtered > 0)){
+        scientificNames <- unique(data$occurence_filtered$scientificName)
+        leaflet_occurence_tmp <- data$occurence_filtered
+        leaflet_occurence_tmp$color <- "blue"
+        if(length(scientificNames) == 2) {
+          print("length(scientificNames) : ")
+          print(length(scientificNames))
+          leaflet_occurence_tmp <- leaflet_occurence_tmp %>%
+            mutate(color = case_when(
+              scientificName == scientificNames[1]  ~ 'blue',
+              scientificName == scientificNames[2]  ~ 'green'
+            ))
+        } else if(length(scientificNames) == 3){
+          leaflet_occurence_tmp <- leaflet_occurence_tmp %>%
+            mutate(color = case_when(
+              scientificName == scientificNames[1]  ~ 'blue',
+              scientificName == scientificNames[2]  ~ 'green',
+              scientificName == scientificNames[3]  ~ 'yellow'
+            ))
+        }
+        return(leaflet_occurence_tmp)
+      } else {return(data.frame())} 
+    }) %>% bindCache(list(data$occurence_filtered))
 
     #observe({
-      output$leafletMap <- renderLeaflet({
+      output$leafletMap <- renderUI({
+      #output$leafletMap <- renderLeaflet({
         req(leaflet_occurence())
-
+        if(nrow(leaflet_occurence()) == 0 ){
+          return(div(class = "empty-blue", "0 observation currently passing the filters"))
+        } else {
         withProgress(message = 'Rendering maps', value = 0, {
         leaflet(data =  leaflet_occurence()) %>%
           addTiles() %>%
@@ -83,7 +88,8 @@ server <- function(id, data, session) {
             layerId = ~id
           )
         })
-      })
+        }
+      }) %>% bindCache(leaflet_occurence())
 
     ##### THIS WORKS ONLY WHEN THE DATA PROVIDED TO LEAFLET IS NOT REACTIVE I DON'T GET WHY ####
     observeEvent(input$leafletMap_marker_click, {

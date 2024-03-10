@@ -37,10 +37,7 @@ ui <- function(id) {
   useShinyjs()  # Initialize shinyjs
   bootstrapPage(
       page_navbar(id = ns("page_navbar"),theme = bs_theme(bootswatch = "lumen", bg = "#FCFDFD", fg = "rgb(25, 125, 85)"),
-                                                          #primary = "#2780E3"),
-      sidebar = sidebar(id = ns("main_sidebar"), #title = div(style = "text-align:center", 'Supplementary filters'),
-          #shiny::h5(div(style = "text-align:center", 'Supplementary filters')),
-                        #'sidebar text'),
+      sidebar = sidebar(id = ns("main_sidebar"), open = "desktop",
           title = "Filter observations",
           conditionalPanel(ns=ns,
             "input.page_navbar === 'Explore' || input.page_navbar === 'Count'",
@@ -54,7 +51,7 @@ ui <- function(id) {
             "input.page_navbar === 'Test'",
             "Page 3 sidebar"
           )),
-      title = "MyApp",
+      title = "Biodata Discovery Board",
       header = select_species$ui(ns("select_species")),
       nav_panel(title = "Explore",
                explore_panel$ui(ns("explorepanel"))

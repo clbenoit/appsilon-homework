@@ -5,6 +5,7 @@ box::use(
   DBI[dbReadTable, dbConnect,dbGetQuery],
   dplyr[`%>%`, filter],
   utils[head],
+  shinybusy[remove_modal_spinner, show_modal_spinner]
 )
 
 #' @export
@@ -22,27 +23,21 @@ DataManager <- R6::R6Class(
     multimedia = reactiveValues(selected_photo = NULL, creator = NULL),
     filtered_data = reactiveValues(selected_species = 0,
                                    occurence_specie = NULL,
-                                   occurence_specie_continent = NULL,
                                    occurence_filtered = NULL),
     filterbyscientificName = function(scientificNameFilter) {
       observeEvent(scientificNameFilter, {
-        self$filtered_data$occurence_filtered <- dbGetQuery(self$con,
+        show_modal_spinner(
+          spin = "double-bounce",
+          color = "#112446",
+          text = 'Extracting occurences from database')
+        self$filtered_data$occurence_specie <- dbGetQuery(self$con,
           paste("SELECT * FROM occurence WHERE scientificName IN (",
             paste0("'", paste(scientificNameFilter, collapse = "','"), "'"),
             ");", sep = "")
           )
-        print("final filtered")
-        print(nrow(self$filtered_data$occurence_filtered))
+        remove_modal_spinner()
       })
     },
-    # filterbycontinent = function(continentFilter) {
-    #   observeEvent(continentFilter,{
-    #     # self$filtered_data$occurence_specie_continent <- self$filtered_data$occurence_specie %>%
-    #     #   filter(continent %in% continentFilter)
-    #     self$filtered_data$occurence_filtered<- self$filtered_data$occurence_specie %>%
-    #       filter(continent %in% continentFilter)
-    #   })
-    #},
     selectPhoto = function(observation_id) {
       observeEvent(observation_id, {
         req(observation_id)
@@ -57,9 +52,12 @@ DataManager <- R6::R6Class(
     },
     loadDb = function(taxonRank, kingdom) {
       print("inside load DB")
-
-      Sys.setenv(R_CONFIG_ACTIVE = "devel") # rundant with server side for now
-      config <- config::get() # rundant with server side for now
+      shinybusy::show_modal_spinner(
+        spin = "double-bounce",
+        color = "#112446",
+        text = 'Loading database metadata')
+      Sys.setenv(R_CONFIG_ACTIVE = "devel")
+      config <- config::get()
       con <- dbConnect(SQLite(), config$db_path)
       self$con <- con
 
@@ -83,7 +81,6 @@ DataManager <- R6::R6Class(
                                                    paste0("'", paste(kingdom, collapse = "','"), "'"),
                                                    ");", sep = ""))
       
-      
         species_names_match[is.na(species_names_match[,1]),] <- species_names_match[is.na(species_names_match[,1]),2]
         species_names_match[is.na(species_names_match[,2]),] <- species_names_match[is.na(species_names_match[,2]),1]
         species_names_match$id <- seq(1:nrow(species_names_match))
@@ -102,6 +99,7 @@ DataManager <- R6::R6Class(
         vernacularName_choices_selectize <- lapply(grouped_data, function(x){ return(as.list(stats::setNames(x$id,x$vernacularName)))})
         self$species_choices$vernacularName_choices_selectize <- vernacularName_choices_selectize
         self$species_choices$scientificName_choices_selectize <- scientificName_choices_selectize
+        remove_modal_spinner()
       }
     )
 )

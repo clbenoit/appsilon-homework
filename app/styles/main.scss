@@ -32,11 +32,25 @@
   margin: 20px;
 }
 
+.checkbox-inline {
+  padding-right: 5px;
+  padding-left: 5px;
+}
+//labels
 
-//inputs
+#app-main_sidebar-dateRange-label, #app-main_sidebar-lifeStage-label , #sex-label, .sidebar-title,
+#app-main_sidebar-continent-label {
+    display: flex;
+    justify-content: center;
+    padding-top: 15px;
+}
 
-#app-main_sidebar-lifeStage-label {
-  // Your CSS styles for the specific div with the ID "yourDivId"
-  padding-left: 25%;
-  // Add more styles as needed
+.shiny-options-group {
+    display: flex;
+    justify-content: center;
+}
+
+.padding-left-right {
+  padding-left : 10px;
+  padding-right : 10px;
 }

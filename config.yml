@@ -10,6 +10,7 @@ devel:
   rhino_log_file: !expr Sys.getenv("RHINO_LOG_FILE", NA)
   #db_path: "inst/extdata/biodiversity_test_data.db"
   db_path : "/home/ptngs/Git/Homework/data/sqlite/poland/biodiversity_data_poland.db"
+  #db_path : "/home/ptngs/Git/Homework/data/sqlite/all/biodiversity_data.db"
   cache_directory: "tempdir"
 
 

@@ -3,7 +3,7 @@
 box::use(
   reactable,
   shiny[h3, moduleServer, NS, tagList, fluidRow, column, req, observe, reactive, 
-        reactiveVal, observeEvent, 
+        reactiveVal, observeEvent,  removeModal, showModal, modalDialog, 
         selectizeInput, updateSelectizeInput, reactiveValues, bindEvent],
   # shinyWidgets[...]
 )
@@ -80,8 +80,9 @@ server <- function(id, data, variables) {
       allow_update$scientificName <- FALSE
       allow_update$time <- Sys.time()
       #   updateSelectizeInput(session, "scientificName", selected = data$species_names_match() %>% dplyr::filter(`vernacularName` == input$vernacularName)[,"scientificName"])
-      updateSelectizeInput(session, inputId = "scientificName", choices = data$species_choices$scientificName_choices_selectize,
-                           selected = data$species_choices$species_names_match[data$species_choices$species_names_match$id %in% input$vernacularName, "id"]
+      updateSelectizeInput(session, inputId = "scientificName", # choices = data$species_choices$scientificName_choices_selectize,
+                           selected = data$species_choices$species_names_match[data$species_choices$species_names_match$id %in% input$vernacularName, "id"]#,
+                           #server = TRUE
       )
       
     }) |>
@@ -91,8 +92,9 @@ server <- function(id, data, variables) {
       allow_update$vernacularName <- FALSE
       allow_update$time <- Sys.time()
       #updateSelectizeInput(session, "vernacularName", selected = data$species_names_match() %>% dplyr::filter(`scientificName` == input$scientificName)[,"vernacularName"])
-      updateSelectizeInput(session, inputId = "vernacularName", choices = data$species_choices$vernacularName_choices_selectize,
-                           selected = data$species_choices$species_names_match[data$species_choices$species_names_match$id %in% input$scientificName, "id"]
+      updateSelectizeInput(session, inputId = "vernacularName", #choices = data$species_choices$vernacularName_choices_selectize,
+                           selected = data$species_choices$species_names_match[data$species_choices$species_names_match$id %in% input$scientificName, "id"]#,
+                           #server = TRUE
       )
       
       #input$scientificName)
@@ -146,6 +148,12 @@ server <- function(id, data, variables) {
       req(variables$filters$scientificName)
       data$filterbyscientificName(variables$filters$scientificName)
     })    
+    observeEvent(data$filtered_data$occurence_specie,{
+      # print(removeModal(session = session))
+      print("dd")
+      removeModal(session = session)
+      print('dada')
+    })
     
   })
 }

@@ -13,7 +13,6 @@ box::use(
   app/view/timeline,
 )
 
-
 #' @export
 ui <- function(id) {
   ns <- NS(id)
@@ -31,18 +30,15 @@ server <- function(id, data, variables) {
     observeEvent(data$filtered_data$selected_species,{
       if(0 %in% data$filtered_data$selected_species){
         output$explorePanel <- renderUI({
-          HTML("<div class ='empty-red'>
-                  <h4>Disclaimer:</h4>
-                  <p>No data is currently available for display.</p>
-                  <p>This could be due to various reasons, including insufficient data,
-                     an error in data retrieval, or no relevant records found.</p>
-                  <p>Please check back later or adjust your filters to explore the available data.</p>
+          HTML("<div class ='empty-blue'>
+                  <h4>No species selected</h4>
+                  <p>Please select either a scientificName or a verncularName to start</p>
                   </div> ")
         })
       } else {
         output$explorePanel <- renderUI({
           tagList(
-            timeline$ui(session$ns("timeline")),
+            timeline$ui(session$ns("timeline")),br(),
               fluidRow(
                 column(
                   width = 7,

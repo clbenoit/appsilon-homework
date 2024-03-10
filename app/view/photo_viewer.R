@@ -39,15 +39,17 @@ server <- function(id, data, variables) {
         } else if (length(data$multimedia$selected_photo) == 1){
           return(tagList(
             img(src=data$multimedia$selected_photo[selected_picture()], width = '100%', height = '80%'),br(),br(),
-            div(paste0("Creator : ", data$multimedia$creator[selected_picture()]))
+            div(class = "padding-left-right",paste0("Creator : ", data$multimedia$creator[selected_picture()]))
            ))
         } else {
             return(
               tagList(
                 img(src=data$multimedia$selected_photo[selected_picture()], width = '100%', height = '80%'), br(),br(),
+                div(class = "padding-left-right",
                 div(paste0(" Creator : ", data$multimedia$creator[selected_picture()])), br(),
                 fluidRow(column(width = 6, actionButton(ns('previousbutton'),"previous", width = "100%")),
                          column(width = 6, actionButton(ns('nextbutton'),"next", width = "100%")))
+                )
               )
             )
         }

@@ -26,7 +26,7 @@ ui <- function(id) {
                card_header("Timeline"),
                card_body(
                  class = "p-0",
-                 timevisOutput(ns("timevisui"))
+                 uiOutput(ns("timevisui"))
                )
              ))
       )
@@ -46,6 +46,7 @@ server <- function(id, data, variables) {
       p$set(value = NULL, message = "Computing timeline data...")
       occurence_filtered <- data$occurence_filtered
       promise <- future_promise({
+        if(nrow(occurence_filtered) > 0){
         timeline_occurence <- occurence_filtered
         if(TRUE %in% unique(is.na(occurence_filtered$eventDate))){
           timeline_occurence <- occurence_filtered[!is.na(occurence_filtered$eventDate),]
@@ -74,6 +75,9 @@ server <- function(id, data, variables) {
         )
         timeline_occurence$group <- as.numeric(timeline_occurence$group_content)
         timeline_occurence
+        } else {timeline_occurence <- data.frame()
+                timeline_occurence
+        }
       }) %...>%  timeline_occurence() %>%
         finally(~p$close())
     })
@@ -85,17 +89,23 @@ server <- function(id, data, variables) {
        content = levels(timeline_occurence()$group_content)
     )})
 
-    output$timevisui <- renderTimevis({
+    output$timevisui <- renderUI({
       req(timeline_occurence())
-      withProgress(message = 'Rendering timeline data', value = 0, {
-      timevis(timeline_occurence(),
-              options = list(cluster = TRUE,
-                             cluster.maxItems = 3),
-              groups = timeline_groups()
-       )
-     })
+      if(nrow(timeline_occurence()) > 0){
+        renderTimevis({
+          withProgress(message = 'Rendering timeline data', value = 0, {
+            timevis(timeline_occurence(),
+                    options = list(cluster = TRUE,
+                                   cluster.maxItems = 3),
+                    groups = timeline_groups()
+            )
+          })})
+      } else {
+        print("o obs tomeline")
+        shiny::div(class = "empty-blue", "0 observation currently passing the filters")
+      }
     }) %>% bindCache(list(timeline_groups(),timeline_occurence()))
-
+    
     observeEvent(input$timevisui_selected, {
       selected_marker <- tryCatch(as.numeric(input$timevisui_selected),
                                   warning = function(w){return(NULL)})

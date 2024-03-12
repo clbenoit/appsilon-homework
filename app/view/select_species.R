@@ -27,7 +27,7 @@ ui <- function(id) {
                       column(width = 6, 
                              selectizeInput(inputId = ns("kingdom"), label = "kingdom",
                                             width = '100%',
-                                            multiple = TRUE,
+                                            multiple = FALSE,
                                             choices = c("Animalia","Plantae","Fungi"),
                                             selected = c("Animalia"))
                              ),
@@ -69,35 +69,40 @@ server <- function(id, data, variables) {
     # * NULL, if this vernacularName cannot be updated currently
     # * The current system time otherwise (a monotonically increasing value)
     update_vernacularName <- reactive(if (allow_update$vernacularName) Sys.time()) |>
-      bindEvent(input$vernacularName)
+      bindEvent(input$vernacularName, ignoreNULL = FALSE, ignoreInit = TRUE)
     
     update_scientificName <- reactive(if (allow_update$scientificName) Sys.time()) |>
-      bindEvent(input$scientificName)
+      bindEvent(input$scientificName, ignoreNULL = FALSE, ignoreInit = TRUE)
     
     # observe the event of these update_*() reactives changing. We need to make sure to not bind to the event when on
     # initialisation, otherwise we will get stuck in a loop
     observe({
       allow_update$scientificName <- FALSE
       allow_update$time <- Sys.time()
-      #   updateSelectizeInput(session, "scientificName", selected = data$species_names_match() %>% dplyr::filter(`vernacularName` == input$vernacularName)[,"scientificName"])
-      updateSelectizeInput(session, inputId = "scientificName", # choices = data$species_choices$scientificName_choices_selectize,
-                           selected = data$species_choices$species_names_match[data$species_choices$species_names_match$id %in% input$vernacularName, "id"]#,
-                           #server = TRUE
-      )
-      
+      if(!is.null(input$vernacularName)){
+      #updateSelectizeInput(session, "scientificName", selected = data$species_names_match() %>% dplyr::filter(`vernacularName` == input$vernacularName)[,"scientificName"])
+      updateSelectizeInput(session, inputId = "scientificName",
+                           selected = data$species_choices$species_names_match[data$species_choices$species_names_match$id %in% input$vernacularName, "id"]#, server = TRUE
+                           )
+      } else {
+        updateSelectizeInput(session, inputId = "scientificName",
+                             selected = " ")
+      } 
     }) |>
       bindEvent(update_vernacularName(), ignoreInit = FALSE)
     
     observe({
       allow_update$vernacularName <- FALSE
       allow_update$time <- Sys.time()
-      #updateSelectizeInput(session, "vernacularName", selected = data$species_names_match() %>% dplyr::filter(`scientificName` == input$scientificName)[,"vernacularName"])
-      updateSelectizeInput(session, inputId = "vernacularName", #choices = data$species_choices$vernacularName_choices_selectize,
-                           selected = data$species_choices$species_names_match[data$species_choices$species_names_match$id %in% input$scientificName, "id"]#,
-                           #server = TRUE
-      )
-      
-      #input$scientificName)
+      if(!is.null(input$scientificName)){
+        #updateSelectizeInput(session, "vernacularName", selected = data$species_names_match() %>% dplyr::filter(`scientificName` == input$scientificName)[,"vernacularName"])
+        updateSelectizeInput(session, inputId = "vernacularName",
+                           selected = data$species_choices$species_names_match[data$species_choices$species_names_match$id %in% input$scientificName, "id"]#, server = TRUE
+      )      
+      } else {
+        updateSelectizeInput(session, inputId = "vernacularName",
+                             selected = " ")
+      } 
     }) |>
       bindEvent(update_scientificName(), ignoreInit = FALSE)
     
@@ -120,18 +125,24 @@ server <- function(id, data, variables) {
     }) |>
       bindEvent(last_update_trigger())
     
-    
     selected_species <- reactiveVal(0)
-    observeEvent(input$scientificName, ignoreInit = TRUE,{
-      req(input$scientificName)
-      print("update specie id (scientificaly based)")
-      data$filtered_data$selected_species <- input$scientificName
-      variables$set_scientificName(names(data$species_choices$scientificName_choices[data$species_choices$scientificName_choices %in% input$scientificName]))
+    observeEvent(input$scientificName, ignoreInit = TRUE, ignoreNULL = FALSE, {
+      #req(input$scientificName)
+      if(!is.null(input$scientificName)) {
+        print("update specie id (scientificaly based)")
+        data$filtered_data$selected_species <- input$scientificName
+        variables$set_scientificName(names(data$species_choices$scientificName_choices[data$species_choices$scientificName_choices %in% input$scientificName]))
+      } else {
+        data$filtered_data$selected_species <- 0
+      }
     })
-    observeEvent(input$vernacularName,ignoreInit = TRUE, {
-      print("update specie id (vernacularaly based)")
-      data$filtered_data$selected_species <- input$vernacularName
-      
+    observeEvent(input$vernacularName,ignoreInit = TRUE, ignoreNULL = FALSE,{
+      if(!is.null(input$vernacularName)) {
+        print("update specie id (vernacularaly based)")
+        data$filtered_data$selected_species <- input$vernacularName
+      } else {
+        data$filtered_data$selected_species <- 0
+      }
     })
     # observeEvent(data$filtered_data$selected_species, ignoreInit = TRUE,{
     #     req(data$filtered_data$selected_species)
@@ -146,14 +157,9 @@ server <- function(id, data, variables) {
     
     observeEvent(variables$filters$scientificName, ignoreInit = TRUE,{
       req(variables$filters$scientificName)
-      data$filterbyscientificName(variables$filters$scientificName)
+      req(input$kingdom)
+      data$filterbyscientificName(variables$filters$scientificName,input$kingdom)
     })    
-    observeEvent(data$filtered_data$occurence_specie,{
-      # print(removeModal(session = session))
-      print("dd")
-      removeModal(session = session)
-      print('dada')
-    })
-    
+
   })
 }

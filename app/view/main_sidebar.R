@@ -32,7 +32,7 @@ ui <- function(id) {
 server <- function(id, con, data, variables) {
   moduleServer(id, function(input, output, session) {
     
-    observeEvent(data$filtered_data$occurence_specie,{
+    observeEvent(data$filtered_data$occurence_specie, priority = 100,{
     req(data$filtered_data$occurence_specie)
     lifeStage_values <- unique(data$filtered_data$occurence_specie$lifeStage)
     updateSelectizeInput(session, "lifeStage", choices = lifeStage_values, selected = lifeStage_values, server = FALSE)
@@ -53,10 +53,11 @@ server <- function(id, con, data, variables) {
           return(data$filtered_data$occurence_specie %>%
             filter(lifeStage %in% input$lifeStage))
         } else {
-          return(data$filtered_data$occurence_specie[0,])
-        }
-    }) %>%  bindCache(list(input$lifeStage, data$filtered_data$occurence_specie))
-    
+           return(data$filtered_data$occurence_specie[0,])
+        } 
+    })  %>% 
+      bindCache(list(input$lifeStage, data$filtered_data$occurence_specie))
+
     occurence_specie_lifeStage_continent <- reactive({
       req(occurence_specie_lifeStage())
       if(!is.null(input$continent)){

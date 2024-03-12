@@ -5,7 +5,7 @@ box::use(
   shiny[bootstrapPage, div, moduleServer, NS, renderUI, tags, uiOutput,
         selectizeInput, updateSelectizeInput, shinyOptions, bindCache,bindEvent,
         observe, observeEvent ,reactive, req, fluidRow, p, icon, h2, sliderInput, column,
-        tagList, reactiveVal, conditionalPanel, renderText, HTML, reactiveValues],
+        tagList, reactiveVal, conditionalPanel, renderText, HTML, reactiveValues, a],
   utils[head],
   RSQLite[SQLite],
   DBI[dbReadTable, dbConnect,dbGetQuery],
@@ -15,6 +15,7 @@ box::use(
   shinydashboard[dashboardHeader,dashboardPage,dashboardBody,dashboardSidebar,
                  sidebarMenu,menuItem, box],
   shinyjs[useShinyjs, show, hide],
+  shiny.router[router_ui, router_server, route, route_link], 
 )
 ## Import shiny modules
 box::use(
@@ -26,9 +27,13 @@ box::use(
 )
 
 link_posit <- tags$a(
-  shiny::icon("r-project"), "Posit",
+  icon("r-project"), "Posit",
   href = "https://posit.co",
   target = "_blank"
+)
+link_doc <- tags$a(
+    icon("book"),"Documentation", 
+    href = route_link("documentation")
 )
 
 #' @export
@@ -36,6 +41,9 @@ ui <- function(id) {
   ns <- NS(id)
   useShinyjs()  # Initialize shinyjs
   bootstrapPage(
+    router_ui(
+      route("main",
+      bootstrapPage(
       page_navbar(id = ns("page_navbar"),theme = bs_theme(bootswatch = "lumen", bg = "#FCFDFD", fg = "rgb(25, 125, 85)"),
       sidebar = sidebar(id = ns("main_sidebar"), open = "desktop",
           title = "Filter observations",
@@ -63,7 +71,8 @@ ui <- function(id) {
       nav_menu(
         title = "Links",
         align = "right",
-        nav_item(link_posit)
+        nav_item(link_posit),
+        nav_item(link_doc)
       ),
     ),
     footer = fluidRow(column(width = 12, 
@@ -71,9 +80,19 @@ ui <- function(id) {
                               shiny::HTML("Copyright <a href='https://observation-international.org'
                                          target='_blank'>Observation International</a> 2024")
                              )
-                            )
-                      )
+       ))
+      )
+    ), 
+    route("documentation", 
+               tagList(
+                div(class ="padding",
+                  a("Go back to the app", href = route_link("main"))
+               ),
+               div(class ="padding",
+               shiny::includeMarkdown("inst/md/documentation.md"))
+               ))
     )
+  )
 }
 
 #' @export
@@ -81,7 +100,7 @@ server <- function(id) {
   
   moduleServer(id, function(input, output, session) {
     
-
+    router_server("main")
     future::plan("multisession")
     #future::plan("multicore")
 
@@ -92,7 +111,6 @@ server <- function(id) {
     select_species$server("select_species", data= DataManager, variables = Variables)
     explore_panel$server("explorepanel", data = DataManager, variables = Variables)
     main_sidebar$server("main_sidebar", data = DataManager, variables = Variables)
-    
 
   })
 }

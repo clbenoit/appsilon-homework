@@ -3,7 +3,7 @@
 box::use(
   reactable,
   shiny[h3, moduleServer, NS, tagList, fluidRow, column, req, observe, observeEvent,
-        reactive, withProgress, reactiveVal, bindCache, 
+        reactive, withProgress, reactiveVal, bindCache, div, 
         HTML, renderUI, uiOutput],
   timevis[timevis, renderTimevis,timevisOutput],
   utils[head],
@@ -101,8 +101,7 @@ server <- function(id, data, variables) {
             )
           })})
       } else {
-        print("o obs tomeline")
-        shiny::div(class = "empty-blue", "0 observation currently passing the filters")
+        div(class = "empty-blue", "0 observation currently passing the filters")
       }
     }) %>% bindCache(list(timeline_groups(),timeline_occurence()))
     

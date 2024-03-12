@@ -15,7 +15,7 @@ box::use(
   shinydashboard[dashboardHeader,dashboardPage,dashboardBody,dashboardSidebar,
                  sidebarMenu,menuItem, box],
   shinyjs[useShinyjs, show, hide],
-  shiny.router[router_ui, router_server, route, route_link], 
+  shiny.router[router_ui, router_server, route, route_link],
 )
 ## Import shiny modules
 box::use(
@@ -34,6 +34,12 @@ link_posit <- tags$a(
 link_doc <- tags$a(
     icon("book"),"Documentation", 
     href = route_link("documentation")
+)
+
+link_appsilon <- tags$a(
+  shiny::img(src = "appsilon.svg", style="height:40px"),
+  href = "https://www.appsilon.com/",
+  target = "_blank"
 )
 
 #' @export
@@ -71,27 +77,32 @@ ui <- function(id) {
       nav_menu(
         title = "Links",
         align = "right",
+        nav_item(link_appsilon),
         nav_item(link_posit),
         nav_item(link_doc)
       ),
-    ),
-    footer = fluidRow(column(width = 12, 
-                             div(style = "text-align: right; padding: 1%;",
-                              shiny::HTML("Copyright <a href='https://observation-international.org'
-                                         target='_blank'>Observation International</a> 2024")
-                             )
-       ))
-      )
+    )
+   )
     ), 
     route("documentation", 
+          bootstrapPage(
                tagList(
                 div(class ="padding",
                   a("Go back to the app", href = route_link("main"))
                ),
                div(class ="padding",
                shiny::includeMarkdown("inst/md/documentation.md"))
-               ))
-    )
+               )))
+    ),
+   footer = HTML('<footer>
+        <!-- SVG image with a clickable link -->
+        <a href="https://www.appsilon.com/" target="_blank">
+            <img src="appsilon.svg">
+            </img>
+        </a>
+        <!-- Text on the right side of the footer -->
+        <span>Copyright <a href="https://observation-international.org" target="_blank">Observation International</a> 2024</span>
+    </footer>')
   )
 }
 

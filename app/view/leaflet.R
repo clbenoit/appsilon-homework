@@ -41,10 +41,10 @@ server <- function(id, data, session) {
     #   longitudeDecimal = c(-0.09, -0.1, -0.12),
     #   individualCount = c("Marker 1", "Marker 2", "Marker 3")
     # )
-    icons <- leaflet::iconList(blue = leaflet::makeIcon("www/location-dot-blue.svg", iconWidth = 24, iconHeight =32),
-                      yellow = leaflet::makeIcon("www/location-dot-yellow.svg", iconWidth = 24, iconHeight =32),
-                      green = leaflet::makeIcon("www/location-dot-green.svg", iconWidth = 24, iconHeight =32),
-                      red = leaflet::makeIcon("www/location-dot-red.svg", iconWidth = 24, iconHeight =32))
+    icons <- leaflet::iconList(blue = makeIcon("www/location-dot-blue.svg", iconWidth = 24, iconHeight =32),
+                      yellow = makeIcon("www/location-dot-yellow.svg", iconWidth = 24, iconHeight =32),
+                      green = makeIcon("www/location-dot-green.svg", iconWidth = 24, iconHeight =32),
+                      red = makeIcon("www/location-dot-red.svg", iconWidth = 24, iconHeight =32))
 
     leaflet_occurence <- reactive({
       req(data$occurence_filtered)

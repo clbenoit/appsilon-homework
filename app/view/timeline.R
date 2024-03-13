@@ -26,7 +26,7 @@ ui <- function(id) {
                card_header("Timeline"),
                card_body(
                  class = "p-0",
-                 uiOutput(ns("timevisui"))
+                 timevisOutput(ns("timevisui"))
                )
              ))
       )
@@ -89,20 +89,20 @@ server <- function(id, data, variables) {
        content = levels(timeline_occurence()$group_content)
     )})
 
-    output$timevisui <- renderUI({
+    #output$timevisui <- renderUI({
+    output$timevisui <- renderTimevis({
       req(timeline_occurence())
-      if(nrow(timeline_occurence()) > 0){
-        renderTimevis({
+      # if(nrow(timeline_occurence()) > 0){
           withProgress(message = 'Rendering timeline data', value = 0, {
             timevis(timeline_occurence(),
                     options = list(cluster = TRUE,
                                    cluster.maxItems = 3),
                     groups = timeline_groups()
             )
-          })})
-      } else {
-        div(class = "empty-blue", "0 observation currently passing the filters")
-      }
+          })
+       # } else {
+       #   div(class = "empty-blue", "0 observation currently passing the filters")
+       # }
     }) %>% bindCache(list(timeline_groups(),timeline_occurence()))
     
     observeEvent(input$timevisui_selected, {

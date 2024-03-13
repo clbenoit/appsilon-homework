@@ -91,7 +91,8 @@ ui <- function(id) {
                   a("Go back to the app", href = route_link("main"))
                ),
                div(class ="padding",
-               shiny::includeMarkdown("inst/md/documentation.md"))
+               shiny::includeMarkdown("app/static/md/documentation.md")
+               )
                )))
     ),
    footer = HTML('<footer>

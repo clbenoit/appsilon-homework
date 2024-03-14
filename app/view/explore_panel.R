@@ -47,7 +47,6 @@ server <- function(id, data, variables) {
                 leaflet$ui(session$ns("exploremap"))
               ),
             ),
-            #render_table$ui(session$ns("occurence_filtered"))
           )
         })
       }

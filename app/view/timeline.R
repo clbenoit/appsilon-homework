@@ -57,7 +57,8 @@ server <- function(id, data, variables) {
           content_html <- apply(timeline_occurence, 1, function(observation) {
             id <- paste0("ID = ", observation["id"])
             sex <- paste0("sex = ", observation["sex"])
-            content_html <- c(content_html, paste(id, sex,
+            vernacularName <- paste0("vernacularName = ", observation["vernacularName"])
+            content_html <- c(content_html, paste(id, sex, vernacularName,
                                                   sep = "<br/>", collapse = "br/"))
             return(content_html)
           })

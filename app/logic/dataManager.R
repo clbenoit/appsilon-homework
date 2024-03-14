@@ -1,10 +1,9 @@
 box::use(
   R6[R6Class],
-  shiny[reactiveValues, observeEvent, shinyOptions, req, reactiveVal],
+  shiny[reactiveValues, observeEvent, shinyOptions, req],
   RSQLite[SQLite],
   DBI[dbReadTable, dbConnect, dbGetQuery],
   dplyr[`%>%`, filter],
-  utils[head],
   stats[setNames],
   config[get],
   cachem[cache_disk],
@@ -19,10 +18,7 @@ DataManager <- R6::R6Class(
     species_choices = reactiveValues(
       species_names_match = NULL,
       scientificName_choices = NULL,
-      vernacularName_choices = NULL,
-      scientificName_choices_selectize = NULL,
-      vernacularName_choices_selectize = NULL
-    ),
+      scientificName_choices_selectize = NULL),
     multimedia = reactiveValues(selected_photo = NULL, creator = NULL),
     filtered_data = reactiveValues(selected_species = 0,
                                    occurence_specie = NULL,
@@ -33,7 +29,6 @@ DataManager <- R6::R6Class(
           spin = "double-bounce",
           color = "#112446",
           text = "Extracting occurences from database")
-        self$filtered_data$filters_ready <- FALSE
         self$filtered_data$occurence_specie <- dbGetQuery(
           self$con,
           paste("SELECT * FROM occurence_",
@@ -82,34 +77,24 @@ DataManager <- R6::R6Class(
 
       species_names_match <- dbGetQuery(
         con,
-        paste("SELECT DISTINCT vernacularName, scientificName, family FROM occurence_",
+        paste("SELECT DISTINCT scientificName, family FROM occurence_",
               kingdom,
               " WHERE taxonRank IN (",
               paste0("'", paste(taxonRank, collapse = "','"), "'"),
               ");", sep = "")
       )
-
-      species_names_match[is.na(species_names_match[, 1]), ] <- species_names_match[is.na(species_names_match[, 1]), 2]
-      species_names_match[is.na(species_names_match[, 2]), ] <- species_names_match[is.na(species_names_match[, 2]), 1]
+      
       species_names_match$id <- seq_len(nrow(species_names_match))
-
       scientificName_choices <-  species_names_match$id
       names(scientificName_choices) <- species_names_match$scientificName
-      vernacularName_choices <- species_names_match$id
-      names(vernacularName_choices) <- species_names_match$vernacularName
       self$species_choices$scientificName_choices <- scientificName_choices
-      self$species_choices$vernacularName_choices <- vernacularName_choices
       self$species_choices$species_names_match <- species_names_match
 
       species_names_match$family <- tolower(species_names_match$family)
       grouped_data <- split(species_names_match, species_names_match$family)
       scientificName_choices_selectize <- lapply(grouped_data, function(x) {
-        return(as.list(setNames(x$id, x$scientificName)))
+        return(setNames(x$id, x$scientificName))
       })
-      vernacularName_choices_selectize <- lapply(grouped_data, function(x) {
-        return(as.list(setNames(x$id, x$vernacularName)))
-      })
-      self$species_choices$vernacularName_choices_selectize <- vernacularName_choices_selectize
       self$species_choices$scientificName_choices_selectize <- scientificName_choices_selectize
       remove_modal_spinner()
     }

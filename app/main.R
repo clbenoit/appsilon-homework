@@ -119,7 +119,7 @@ server <- function(id) {
 
     Variables <- Variables$new()
     DataManager <- DataManager$new()
-    DataManager$loadDb("species", "Animalia")
+    DataManager$loadDb(1, "Animalia")
 
     select_species$server("select_species",
                           data = DataManager,

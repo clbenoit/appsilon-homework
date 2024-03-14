@@ -21,7 +21,7 @@ server <- function(id, data) {
     observe({
       req(data$occurence_filtered)
       output$table <- reactable$renderReactable(
-      reactable$reactable(data$occurence_filtered)
+        reactable$reactable(data$occurence_filtered)
       )
     })
   })

@@ -1,20 +1,17 @@
-#options(shiny.trace=TRUE)
-
-## Import dependancies
+## Import dependencies
 box::use(
-  shiny[bootstrapPage, div, moduleServer, NS, renderUI, tags, uiOutput,
-        selectizeInput, updateSelectizeInput, shinyOptions, bindCache,bindEvent,
-        observe, observeEvent ,reactive, req, fluidRow, p, icon, h2, sliderInput, column,
-        tagList, reactiveVal, conditionalPanel, renderText, HTML, reactiveValues, a],
-  utils[head],
+  shiny[bootstrapPage, div, moduleServer, NS,
+        renderUI, tags, uiOutput,
+        selectizeInput, updateSelectizeInput,
+        shinyOptions, bindCache, bindEvent,
+        observe, observeEvent, req, fluidRow,
+        p, icon, h2, column,
+        tagList, conditionalPanel, HTML, a],
   RSQLite[SQLite],
-  DBI[dbReadTable, dbConnect,dbGetQuery],
-  dplyr[`%>%`,filter,select],
-  bslib[bs_theme,page_navbar,
-        nav_item, nav_menu, nav_panel, nav_spacer,sidebar],
-  shinydashboard[dashboardHeader,dashboardPage,dashboardBody,dashboardSidebar,
-                 sidebarMenu,menuItem, box],
-  shinyjs[useShinyjs, show, hide],
+  DBI[dbReadTable, dbConnect, dbGetQuery],
+  bslib[bs_theme, page_navbar,
+        nav_item, nav_menu, nav_panel, nav_spacer, sidebar],
+  shinyjs[useShinyjs],
   shiny.router[router_ui, router_server, route, route_link],
 )
 ## Import shiny modules
@@ -32,8 +29,8 @@ link_posit <- tags$a(
   target = "_blank"
 )
 link_doc <- tags$a(
-    icon("book"),"Documentation", 
-    href = route_link("documentation")
+  icon("book"), "Documentation",
+  href = route_link("documentation")
 )
 
 link_appsilon <- tags$a(
@@ -45,84 +42,94 @@ link_appsilon <- tags$a(
 #' @export
 ui <- function(id) {
   ns <- NS(id)
-  useShinyjs()  # Initialize shinyjs
+  useShinyjs()
   bootstrapPage(
     router_ui(
       route("main",
-      bootstrapPage(
-      page_navbar(id = ns("page_navbar"),theme = bs_theme(bootswatch = "lumen", bg = "#FCFDFD", fg = "rgb(25, 125, 85)"),
-      sidebar = sidebar(id = ns("main_sidebar"), open = "desktop",
-          title = "Filter observations",
-          conditionalPanel(ns=ns,
-            "input.page_navbar === 'Explore' || input.page_navbar === 'Count'",
-            main_sidebar$ui(ns("main_sidebar"))
-          ),
-          conditionalPanel(ns=ns,
-            "input.page_navbar === 'Contributors'",
-            "Page 2 sidebar"
-          ),
-          conditionalPanel(ns=ns,
-            "input.page_navbar === 'Test'",
-            "Page 3 sidebar"
-          )),
-      title = "Biodata Discovery Board",
-      header = select_species$ui(ns("select_species")),
-      nav_panel(title = "Explore",
-               explore_panel$ui(ns("explorepanel"))
-               ),
-      nav_panel(title = "Count",
+        bootstrapPage(
+          page_navbar(id = ns("page_navbar"),
+                      theme = bs_theme(bootswatch = "lumen",
+                                       bg = "#FCFDFD",
+                                       fg = "rgb(25, 125, 85)"),
+            sidebar = sidebar(id = ns("main_sidebar"), open = "desktop",
+            title = "Filter observations",
+            conditionalPanel(ns = ns,
+              "input.page_navbar === 'Explore' || input.page_navbar === 'Count'",
+              main_sidebar$ui(ns("main_sidebar"))
+            ),
+            conditionalPanel(ns = ns,
+              "input.page_navbar === 'Contributors'",
+              "Page 2 sidebar"
+            ),
+            conditionalPanel(ns = ns,
+              "input.page_navbar === 'Test'",
+              "Page 3 sidebar"
+            )),
+            title = "Biodata Discovery Board",
+            header = select_species$ui(ns("select_species")),
+            nav_panel(title = "Explore",
+              explore_panel$ui(ns("explorepanel"))
+            ),
+            nav_panel(title = "Count", ),
+            nav_panel("Contributors", p("Third page content.")),
+            nav_spacer(),
+            nav_menu(
+              title = "Links", align = "right",
+              nav_item(link_appsilon),
+              nav_item(link_posit),
+              nav_item(link_doc)
+            ),
+          )
+        )
       ),
-      nav_panel("Contributors", p("Third page content.")),
-      nav_spacer(),
-      nav_menu(
-        title = "Links",
-        align = "right",
-        nav_item(link_appsilon),
-        nav_item(link_posit),
-        nav_item(link_doc)
-      ),
-    )
-   )
-    ), 
-    route("documentation", 
-          bootstrapPage(
-               tagList(
-                div(class ="padding",
-                  a("Go back to the app", href = route_link("main"))
-               ),
-               div(class ="padding",
-               shiny::includeMarkdown("app/static/md/documentation.md")
-               )
-               )))
+      route("documentation",
+        bootstrapPage(
+          tagList(
+            div(class = "padding",
+              a("Go back to the app", href = route_link("main"))
+            ),
+            div(class = "padding",
+              shiny::includeMarkdown("app/static/md/documentation.md")
+            )
+          )
+        )
+      )
     ),
-   footer = HTML('<footer>
-        <!-- SVG image with a clickable link -->
-        <a href="https://www.appsilon.com/" target="_blank">
-            <img src="appsilon.svg">
-            </img>
-        </a>
-        <!-- Text on the right side of the footer -->
-        <span>Copyright <a href="https://observation-international.org" target="_blank">Observation International</a> 2024</span>
-    </footer>')
+    footer = HTML(
+                  '<footer>
+                    <!-- SVG image with a clickable link -->
+                     <a href="https://www.appsilon.com/" target="_blank">
+                     <img src="appsilon.svg"></img>
+                     </a>
+                    <!-- Text on the right side of the footer -->
+                    <span> Copyright <a href="https://observation-international.org" target="_blank">
+                      Observation International</a> 2024
+                    </span>
+                   </footer>')
   )
 }
 
 #' @export
 server <- function(id) {
-  
   moduleServer(id, function(input, output, session) {
-    
+
     router_server("main")
     future::plan("multisession")
     #future::plan("multicore")
 
     Variables <- Variables$new()
     DataManager <- DataManager$new()
-    DataManager$loadDb("species","Animalia")
-    
-    select_species$server("select_species", data= DataManager, variables = Variables)
-    explore_panel$server("explorepanel", data = DataManager, variables = Variables)
-    main_sidebar$server("main_sidebar", data = DataManager, variables = Variables)
+    DataManager$loadDb("species", "Animalia")
+
+    select_species$server("select_species",
+                          data = DataManager,
+                          variables = Variables)
+    explore_panel$server("explorepanel",
+                         data = DataManager,
+                         variables = Variables)
+    main_sidebar$server("main_sidebar",
+                        data = DataManager,
+                        variables = Variables)
 
   })
 }

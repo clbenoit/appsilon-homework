@@ -2,10 +2,12 @@ box::use(
   R6[R6Class],
   shiny[reactiveValues, observeEvent, shinyOptions, req, reactiveVal],
   RSQLite[SQLite],
-  DBI[dbReadTable, dbConnect,dbGetQuery],
+  DBI[dbReadTable, dbConnect, dbGetQuery],
   dplyr[`%>%`, filter],
   utils[head],
-  stats[setNames], 
+  stats[setNames],
+  config[get],
+  cachem[cache_disk],
   shinybusy[remove_modal_spinner, show_modal_spinner]
 )
 
@@ -15,29 +17,31 @@ DataManager <- R6::R6Class(
   public = list(
     con = NULL,
     species_choices = reactiveValues(
-    species_names_match = NULL,
-    scientificName_choices = NULL,
-    vernacularName_choices = NULL,
-    scientificName_choices_selectize = NULL,
-    vernacularName_choices_selectize = NULL
+      species_names_match = NULL,
+      scientificName_choices = NULL,
+      vernacularName_choices = NULL,
+      scientificName_choices_selectize = NULL,
+      vernacularName_choices_selectize = NULL
     ),
     multimedia = reactiveValues(selected_photo = NULL, creator = NULL),
     filtered_data = reactiveValues(selected_species = 0,
                                    occurence_specie = NULL,
                                    occurence_filtered = NULL),
-                                   #filters_ready = TRUE),
     filterbyscientificName = function(scientificNameFilter, kingdom) {
       observeEvent(scientificNameFilter, {
         show_modal_spinner(
           spin = "double-bounce",
           color = "#112446",
-          text = 'Extracting occurences from database')
+          text = "Extracting occurences from database")
         self$filtered_data$filters_ready <- FALSE
-        self$filtered_data$occurence_specie <- dbGetQuery(self$con,
-          paste("SELECT * FROM occurence_",kingdom," WHERE scientificName IN (",
-            paste0("'", paste(scientificNameFilter, collapse = "','"), "'"),
-            ");", sep = "")
-          )
+        self$filtered_data$occurence_specie <- dbGetQuery(
+          self$con,
+          paste("SELECT * FROM occurence_",
+                kingdom,
+                " WHERE scientificName IN (",
+                paste0("'", paste(scientificNameFilter, collapse = "','"), "'"),
+                ");", sep = "")
+        )
         remove_modal_spinner()
       })
     },
@@ -45,9 +49,9 @@ DataManager <- R6::R6Class(
       observeEvent(observation_id, {
         req(observation_id)
         query_result <- dbGetQuery(self$con,
-                                   paste("SELECT accessURI, creator FROM multimedia WHERE id = ",
-                                         observation_id,
-                                         ";", sep = "")
+          paste("SELECT accessURI, creator FROM multimedia WHERE id = ",
+                observation_id,
+                ";", sep = "")
         )
         self$multimedia$selected_photo <- query_result$accessURI
         self$multimedia$creator <- query_result$creator
@@ -58,48 +62,56 @@ DataManager <- R6::R6Class(
       shinybusy::show_modal_spinner(
         spin = "double-bounce",
         color = "#112446",
-        text = 'Loading database metadata')
+        text = "Loading database metadata")
       Sys.setenv(R_CONFIG_ACTIVE = "devel")
-      config <- config::get()
+      config <- get()
       con <- dbConnect(SQLite(), config$db_path)
       self$con <- con
 
-      if (config::get("cache_directory") == "tempdir"){
+      if (get("cache_directory") == "tempdir") {
         tempdir <- tempdir()
-        dir.create(file.path(tempdir,"cache"))
-        print(paste0("using following cache directory : ", file.path(tempdir,"cache")))
-        shinyOptions(cache = cachem::cache_disk(file.path(tempdir,"cache")))
+        dir.create(file.path(tempdir, "cache"))
+        print(paste0("using following cache directory : ",
+                     file.path(tempdir, "cache")))
+        shinyOptions(cache = cache_disk(file.path(tempdir, "cache")))
       } else {
         print(paste0("using following cache directory : ",
-                     config::get("cache_directory")))
-        shinyOptions(cache = cachem::cache_disk(config::get("cache_directory")))
+                     get("cache_directory")))
+        shinyOptions(cache = cache_disk(get("cache_directory")))
       }
 
-      species_names_match <- dbGetQuery(con, paste("SELECT DISTINCT vernacularName, scientificName, family
-                                             FROM occurence_",kingdom, 
-                                             " WHERE taxonRank IN (",
-                                                   paste0("'", paste(taxonRank, collapse = "','"), "'"),
-                                                   ");", sep = ""))
-      
-        species_names_match[is.na(species_names_match[,1]),] <- species_names_match[is.na(species_names_match[,1]),2]
-        species_names_match[is.na(species_names_match[,2]),] <- species_names_match[is.na(species_names_match[,2]),1]
-        species_names_match$id <- seq(1:nrow(species_names_match))
-      
-        scientificName_choices <-  species_names_match$id
-        names(scientificName_choices) <- species_names_match$scientificName
-        vernacularName_choices <- species_names_match$id
-        names(vernacularName_choices) <- species_names_match$vernacularName
-        self$species_choices$scientificName_choices <- scientificName_choices
-        self$species_choices$vernacularName_choices <- vernacularName_choices
-        self$species_choices$species_names_match <- species_names_match
-      
-        species_names_match$family <- tolower(species_names_match$family)
-        grouped_data <- split(species_names_match, species_names_match$family)
-        scientificName_choices_selectize <- lapply(grouped_data, function(x){ return(as.list(setNames(x$id,x$scientificName))) })
-        vernacularName_choices_selectize <- lapply(grouped_data, function(x){ return(as.list(setNames(x$id,x$vernacularName)))})
-        self$species_choices$vernacularName_choices_selectize <- vernacularName_choices_selectize
-        self$species_choices$scientificName_choices_selectize <- scientificName_choices_selectize
-        remove_modal_spinner()
-      }
-    )
+      species_names_match <- dbGetQuery(
+        con,
+        paste("SELECT DISTINCT vernacularName, scientificName, family FROM occurence_",
+              kingdom,
+              " WHERE taxonRank IN (",
+              paste0("'", paste(taxonRank, collapse = "','"), "'"),
+              ");", sep = "")
+      )
+
+      species_names_match[is.na(species_names_match[, 1]), ] <- species_names_match[is.na(species_names_match[, 1]), 2]
+      species_names_match[is.na(species_names_match[, 2]), ] <- species_names_match[is.na(species_names_match[, 2]), 1]
+      species_names_match$id <- seq_len(nrow(species_names_match))
+
+      scientificName_choices <-  species_names_match$id
+      names(scientificName_choices) <- species_names_match$scientificName
+      vernacularName_choices <- species_names_match$id
+      names(vernacularName_choices) <- species_names_match$vernacularName
+      self$species_choices$scientificName_choices <- scientificName_choices
+      self$species_choices$vernacularName_choices <- vernacularName_choices
+      self$species_choices$species_names_match <- species_names_match
+
+      species_names_match$family <- tolower(species_names_match$family)
+      grouped_data <- split(species_names_match, species_names_match$family)
+      scientificName_choices_selectize <- lapply(grouped_data, function(x) {
+        return(as.list(setNames(x$id, x$scientificName)))
+      })
+      vernacularName_choices_selectize <- lapply(grouped_data, function(x) {
+        return(as.list(setNames(x$id, x$vernacularName)))
+      })
+      self$species_choices$vernacularName_choices_selectize <- vernacularName_choices_selectize
+      self$species_choices$scientificName_choices_selectize <- scientificName_choices_selectize
+      remove_modal_spinner()
+    }
+  )
 )

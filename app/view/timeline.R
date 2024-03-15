@@ -102,14 +102,14 @@ server <- function(id, data, variables) {
        # } else {
        #   div(class = "empty-blue", "0 observation currently passing the filters")
        # }
-    }) %>% 
+    }) %>%
       bindCache(list(timeline_groups(), timeline_occurence()))
 
     observeEvent(data$occurence_filtered, {
       req(data$occurence_filtered)
       variables$markers$timeline <- NULL
     })
-    
+
     observeEvent(input$timevisui_selected, {
       selected_marker <- tryCatch(as.numeric(input$timevisui_selected),
                                   warning = function(w) {

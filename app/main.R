@@ -19,6 +19,7 @@ box::use(
   app/view/select_species,
   app/view/main_sidebar,
   app/view/explore_panel,
+  app/view/count_panel,
   app/logic/variablesManager[Variables],
   app/logic/dataManager[DataManager],
 )
@@ -44,7 +45,7 @@ ui <- function(id) {
   ns <- NS(id)
   useShinyjs()
   bootstrapPage(
-    router_ui(
+    div(style = "height:100%", router_ui(
       route("main",
         bootstrapPage(
           page_navbar(id = ns("page_navbar"),
@@ -68,9 +69,9 @@ ui <- function(id) {
             title = "Biodata Discovery Board",
             header = select_species$ui(ns("select_species")),
             nav_panel(title = "Explore",
-              explore_panel$ui(ns("explorepanel"))
+              explore_panel$ui(ns("explore_panel"))
             ),
-            nav_panel(title = "Count", ),
+            nav_panel(title = "Count", count_panel$ui(ns("count_panel"))),
             nav_panel("Contributors", p("Third page content.")),
             nav_spacer(),
             nav_menu(
@@ -94,7 +95,7 @@ ui <- function(id) {
           )
         )
       )
-    ),
+    )),
     footer = HTML(
                   '<footer>
                     <!-- SVG image with a clickable link -->
@@ -124,10 +125,13 @@ server <- function(id) {
     select_species$server("select_species",
                           data = DataManager,
                           variables = Variables)
-    explore_panel$server("explorepanel",
+    main_sidebar$server("main_sidebar",
+                        data = DataManager,
+                        variables = Variables)
+    count_panel$server("count_panel",
                          data = DataManager,
                          variables = Variables)
-    main_sidebar$server("main_sidebar",
+    explore_panel$server("explore_panel",
                         data = DataManager,
                         variables = Variables)
 

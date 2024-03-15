@@ -1,4 +1,3 @@
-
 //emptystates
 
 .empty-red {
@@ -7,7 +6,8 @@
   background-color: #f8d7da;
   color: #721c24;
   border: 1px solid #f5c6cb;
-  border-radius: 5px; margin: 20px;
+  border-radius: 5px; 
+  margin: 20px;
 }
 
 .empty-blue {
@@ -24,6 +24,7 @@
   padding-right: 5px;
   padding-left: 5px;
 }
+
 //labels
 
 #app-main_sidebar-dateRange-label, #app-main_sidebar-lifeStage-label, .sidebar-title, #app-main_sidebar-sex-label,
@@ -39,12 +40,12 @@
 }
 
 .padding-left-right {
-  padding-left : 10px;
-  padding-right : 10px;
+  padding-left: 10px;
+  padding-right: 10px;
 }
 
 .padding {
-  padding : 10px;
+  padding: 10px;
 }
 
 //footer
@@ -61,16 +62,16 @@ footer {
   position: fixed;
   z-index: 0;
   width: 100%;
-}
-
-footer a {
-  text-decoration: none;
-  color: #145ca8;
-}
-
-footer img {
-      max-width: 100%;
-      height: 40px;
-      display: block;
-      margin: 0 auto;
+  
+  a {
+    text-decoration: none;
+    color: #145ca8;
+  }
+  
+  img {
+    max-width: 100%;
+    height: 40px;
+    display: block;
+    margin: 0 auto;
+  }
 }

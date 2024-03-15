@@ -50,8 +50,6 @@ server <- function(id, data, session) {
         leaflet_occurence_tmp <- data$occurence_filtered
         leaflet_occurence_tmp$color <- "blue"
         if (length(scientificNames) == 2) {
-          print("length(scientificNames) : ")
-          print(length(scientificNames))
           leaflet_occurence_tmp <- leaflet_occurence_tmp %>%
             mutate(color = case_when(
               scientificName == scientificNames[1]  ~ "blue",

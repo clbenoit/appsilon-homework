@@ -48,9 +48,9 @@ server <- function(id, data, variables) {
     observeEvent(c(input$taxonRank, input$kingdom), ignoreInit = TRUE, {
       req(input$taxonRank); req(input$kingdom)
       print("loadingDB")
-      data$loadDb(input$taxonRank,input$kingdom)
+      data$loadDb(input$taxonRank, input$kingdom)
     })
-  
+
     observeEvent(data$species_choices$scientificName_choices_selectize, {
       updateSelectizeInput(session = session, inputId = "scientificName",
                            choices = data$species_choices$scientificName_choices_selectize,

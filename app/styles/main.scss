@@ -58,9 +58,6 @@ footer {
   align-items: center;
   justify-content: space-between;
   padding: 0 20px;
-  bottom: 0;
-  position: fixed;
-  z-index: 0;
   width: 100%;
   
   a {
@@ -74,4 +71,11 @@ footer {
     display: block;
     margin: 0 auto;
   }
+}
+
+//page
+
+.bslib-sidebar-layout {
+  height: 100vh;
+  max-height: calc(100vh - 61px); /* Adjust 50px for the footer */
 }

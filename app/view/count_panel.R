@@ -19,32 +19,32 @@ ui <- function(id) {
   tagList(
     uiOutput(ns("countPanel")),
     fluidRow(
-    column(width = 6,
-           card(height = "100%", full_screen = TRUE,
-                card_header("Occurences per lifeStage"),
-                card_body(
-                  class = "p-0",
-                  plotOutput(ns("lifeStage_sum_plot"))
-                )
-           )),
-     column(width = 6,
-                  card(height = "100%", full_screen = TRUE,
-                       card_header("Occurences per country"),
-                       card_body(
-                         class = "p-0",
-                         plotOutput(ns("country_sum_plot"))
-                       )
-                  ) 
-            )
-  ))
+      column(width = 6,
+        card(height = "100%", full_screen = TRUE,
+          card_header("Occurences per lifeStage"),
+          card_body(
+            class = "p-0",
+            plotOutput(ns("lifeStage_sum_plot"))
+          )
+        )
+      ),
+      column(width = 6,
+        card(height = "100%", full_screen = TRUE,
+          card_header("Occurences per country"),
+          card_body(
+            class = "p-0",
+            plotOutput(ns("country_sum_plot"))
+          )
+        )
+      )
+    )
+  )
 }
 
 #' @export
 server <- function(id, data, variables) {
   moduleServer(id, function(input, output, session) {
 
-    ns <- session$ns
-    
     taglist <- reactive({
       req(data$filtered_data$occurence_filtered)
       if (nrow(data$filtered_data$occurence_filtered) > 0) {
@@ -63,8 +63,8 @@ server <- function(id, data, variables) {
                 value_box(
                   title = "Total number of occurences",
                   value = sum(data$filtered_data$occurence_filtered$individualCount),
-                  showcase = img(src = "sum-sign.svg", width = "75px", 
-                                 height = "75px", 
+                  showcase = img(src = "sum-sign.svg", width = "75px",
+                                 height = "75px",
                                  style = "filter: brightness(0) invert(1);"),
                   theme = "teal")       
               )            )
@@ -88,41 +88,40 @@ server <- function(id, data, variables) {
       }
     })
   
-  country_sum_data <- reactive({
+    country_sum_data <- reactive({
+      req(data$filtered_data$occurence_filtered)
+      if (nrow(data$filtered_data$occurence_filtered) > 0) {
+        create_sum_data(
+          title = "My title", 
+          split_by = "country", 
+          count_by = "individualCount", 
+          data = data$filtered_data$occurence_filtered)
+    
+      }
+    })
+    output$country_sum_plot <- renderPlot(
+      plot_sum_data(title = "My title", 
+        split_by = "country", 
+        count_by = "individualCount", 
+        data = country_sum_data())
+    )
+    
+    lifeStage_sum_data <- reactive({
       req(data$filtered_data$occurence_filtered)
       if(nrow(data$filtered_data$occurence_filtered) > 0){
         create_sum_data(title = "My title", 
-                        split_by = "country", 
-                        count_by = "individualCount", 
-                        data = data$filtered_data$occurence_filtered)
-    
-    }
-  })
-  output$country_sum_plot <- renderPlot(
-    plot_sum_data(title = "My title", 
-                  split_by = "country", 
-                  count_by = "individualCount", 
-                  data = country_sum_data())
-    
-  )
-    
-  lifeStage_sum_data <- reactive({
-      req(data$filtered_data$occurence_filtered)
-      if(nrow(data$filtered_data$occurence_filtered) > 0){
-        create_sum_data(title = "My title", 
-                        split_by = "lifeStage", 
-                        count_by = "individualCount", 
-                        data = data$filtered_data$occurence_filtered)
-    
-    }
-  })
+          split_by = "lifeStage", 
+          count_by = "individualCount", 
+          data = data$filtered_data$occurence_filtered)
+      }
+    })
     
     output$lifeStage_sum_plot <- renderPlot(
       plot_sum_data(title = "My title", 
-                    split_by = "lifeStage", 
-                    count_by = "individualCount", 
-                    data = lifeStage_sum_data())
-    
+        split_by = "lifeStage", 
+        count_by = "individualCount", 
+        data = lifeStage_sum_data())
     )
+    
   })
 }

@@ -42,13 +42,13 @@ ui <- function(id) {
 }
 
 #' @export
-server <- function(id, data, variables) {
+server <- function(id, data, variables, con) {
   moduleServer(id, function(input, output, session) {
 
     observeEvent(c(input$taxonRank, input$kingdom), ignoreInit = TRUE, {
       req(input$taxonRank); req(input$kingdom)
       print("loadingDB")
-      data$loadDb(input$taxonRank, input$kingdom)
+      data$loadDb(input$taxonRank, input$kingdom, con)
     })
 
     observeEvent(data$species_choices$scientificName_choices_selectize, {

@@ -13,6 +13,8 @@ box::use(
         nav_item, nav_menu, nav_panel, nav_spacer, sidebar],
   shinyjs[useShinyjs],
   shiny.router[router_ui, router_server, route, route_link],
+  config[get],
+  cachem[cache_disk],
 )
 ## Import shiny modules
 box::use(
@@ -45,9 +47,9 @@ ui <- function(id) {
   ns <- NS(id)
   useShinyjs()
   bootstrapPage(
-    div(style = "height:100%", router_ui(
+    router_ui(
       route("main",
-        bootstrapPage(
+          div(style = "height:100vh;",
           page_navbar(id = ns("page_navbar"),
                       theme = bs_theme(bootswatch = "lumen",
                                        bg = "#FCFDFD",
@@ -80,11 +82,9 @@ ui <- function(id) {
               nav_item(link_posit),
               nav_item(link_doc)
             ),
-          )
-        )
+          ))
       ),
       route("documentation",
-        bootstrapPage(
           tagList(
             div(class = "padding",
               a("Go back to the app", href = route_link("main"))
@@ -93,9 +93,8 @@ ui <- function(id) {
               shiny::includeMarkdown("app/static/md/documentation.md")
             )
           )
-        )
       )
-    )),
+    ),
     footer = HTML(
                   '<footer>
                     <!-- SVG image with a clickable link -->
@@ -113,6 +112,21 @@ ui <- function(id) {
 #' @export
 server <- function(id) {
   moduleServer(id, function(input, output, session) {
+    
+    Sys.setenv(R_CONFIG_ACTIVE = "devel")
+    config <- get()
+    con <- dbConnect(SQLite(), config$db_path)
+    if (get("cache_directory") == "tempdir") {
+      tempdir <- tempdir()
+      dir.create(file.path(tempdir, "cache"))
+      print(paste0("using following cache directory : ",
+                   file.path(tempdir, "cache")))
+      shinyOptions(cache = cache_disk(file.path(tempdir, "cache")))
+    } else {
+      print(paste0("using following cache directory : ",
+                   get("cache_directory")))
+      shinyOptions(cache = cache_disk(get("cache_directory")))
+    }
 
     router_server("main")
     future::plan("multisession")
@@ -120,11 +134,12 @@ server <- function(id) {
 
     Variables <- Variables$new()
     DataManager <- DataManager$new()
-    DataManager$loadDb(1, "Animalia")
+    DataManager$loadDb(1, "Animalia", con)
 
     select_species$server("select_species",
                           data = DataManager,
-                          variables = Variables)
+                          variables = Variables,
+                          con = con)
     main_sidebar$server("main_sidebar",
                         data = DataManager,
                         variables = Variables)

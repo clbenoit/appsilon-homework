@@ -29,7 +29,7 @@ Then you'll find it here : `inst/extdata/biodiversity_data_poland.db`. This data
 
 ### However, if you want to generate the whole dataset from raw sources.
 1. You can download the whole dataset [here](https://drive.usercontent.google.com/download?id=1l1ymMg-K_xLriFv1b8MgddH851d6n2sU&export=download&authuser=0&confirm=t&uuid=625527a1-37d8-42f2-bc52-5e094e7d3075&at=APZUnTW4MHTH-1FtcVJNpIiFYF5O%3A1710337610936). 
-2. Then you will have to import occurence and multimedia csv file into an sqlite database
+2. Then you will have to import occurence and multimedia csv files into an sqlite database
 3. Finally execute these few sqlite queries on your sqlite database : 
 
 ```
@@ -111,4 +111,4 @@ COMMIT;
 VACUUM;
 ```
 
-Finally edit [config](config.yml) and .Renviron files to track your database in the app.
+4. Edit [config](config.yml) and .Renviron files to track your database in the app.

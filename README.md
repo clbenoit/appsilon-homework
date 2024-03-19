@@ -1,25 +1,25 @@
-# Biodata Discovery Board App
+# :herb: :mag_right: Biodata Discovery Board App
 This app is built with [Rhino](https://github.com/Appsilon/rhino).
 You can see a deployed version here: 
 [Biodata Discovery Board App Demo](https://omicsverse.fr/app/appsilon-homework).
 Using the biodiversity data coming from the [Global Biodiversity Information Facility](https://www.gbif.org/occurrence/search?dataset_key=8a863029-f435-446a-821e-275f4f641165&month=1), this Shiny app visualizes observed species on the map, draw a timeline with selected species observation, and allows the user to explore associated pictures. 
 
-## Prerequisites
+## :hammer_and_wrench: Prerequisites
 This is an application built in [Shiny](https://shiny.rstudio.com/).
 To run it, make sure you have R (>= 4.0.0) installed.
 For JavaScript and Sass development you'll also need
 [Node.js](https://nodejs.org/en/download/) (>= 16.0.0).
 
-## Dependencies
+## :package: Dependencies
 Run `renv::restore(clean = TRUE)` to synchronize the project library with the lockfile
 when you initially clone the repo or switch branches.
 
-## Running
+## :arrow_forward: Running
 To run the app, use `Rscript -e 'shiny::runApp(launch.browser = TRUE)'`.
 
-## Data
+## :bar_chart: Data
 
-### Application-ready data 
+### :rocket: Application-ready data 
 
 <a href="https://git-lfs.com/" target="_blank">git-lfs</a> is required to fetch the example dataset
 
@@ -27,7 +27,7 @@ run `git lfs pull`
 
 Then you'll find it here : `inst/extdata/biodiversity_data_poland.db`. This dataset is restricted to poland observations to save development time. <br/>
 
-### However, if you want to generate the whole dataset from raw sources.
+### :globe_with_meridians: However, if you want to generate the whole dataset from raw sources.
 1. You can download the whole dataset [here](https://drive.usercontent.google.com/download?id=1l1ymMg-K_xLriFv1b8MgddH851d6n2sU&export=download&authuser=0&confirm=t&uuid=625527a1-37d8-42f2-bc52-5e094e7d3075&at=APZUnTW4MHTH-1FtcVJNpIiFYF5O%3A1710337610936). 
 2. Then you will have to import occurence and multimedia csv files into an sqlite database
 3. Finally execute these few sqlite queries on your sqlite database : 
